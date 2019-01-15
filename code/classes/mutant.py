@@ -1,0 +1,3 @@
+class Mutant:
+    def __init__(self):
+        # ...
