@@ -1,0 +1,173 @@
+<project name="Triangle" default="compile" basedir=".">
+
+    <!-- ##############################################
+          Path to Major and Mutation options
+          Use -Dmutation="=mml-file" to set path to mml-file
+         ############################################## -->
+    <property name="mutOp" value=":NONE"/>
+    <property name="mutator" value="-XMutator${mutOp}"/>
+    <property name="major" value="../major/bin/javac"/>
+    <property name="junit.jar" value="libs/junit-4.12.jar"/>
+    <property name="evosuite-rt" value="libs/evosuite-standalone-runtime-1.0.6.jar:libs/hamcrest-core-1.3.jar"/>
+
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
+
+    <!-- Target to clean up -->
+    <target name="clean" description="Clean">
+        <delete dir="bin"/>
+        <delete>
+            <fileset dir="." includes="*.csv"/>
+            <fileset dir="." includes="*.log"/>
+        </delete>
+    </target>
+
+    <!-- Target to initialize build -->
+    <target name="init">
+        <mkdir dir="bin"/>
+    </target>
+
+
+    <!-- Target to compile the project -->
+    <target name="compile" depends="init" description="Compile">
+        <javac srcdir="src"
+               destdir="bin"
+               debug="yes"
+	       fork="yes">
+        </javac>
+    </target>
+
+    <!-- Target to compile the test suite -->
+    <target name="compile.tests" depends="compile" description="Compile all tests">
+	<delete dir="bin-tests" quiet="true" />
+        <mkdir dir="bin-tests" />
+        <javac srcdir="src"
+               destdir="bin-tests"
+	       debug="yes"
+	       deprecation="false"
+	       optimize="false">
+	       <classpath>
+		       <pathelement path="${junit.jar}" />
+			<pathelement path="bin/"/>
+			<pathelement path="${evosuite-rt}"/>
+	       </classpath>
+        </javac>
+    </target>
+
+    <!-- The original test target -->
+    <target name="test" depends="compile.tests" description="Run all unit test cases">
+        <echo message="Running unit tests ..."/>
+        <junit printsummary="true"
+               showoutput="true"
+               haltonfailure="false">
+            <formatter type="plain" usefile="false"/>
+
+	       <classpath>
+		       <pathelement path="${junit.jar}"/>
+		       <pathelement path="${evosuite-rt}"/>
+		       <pathelement path="bin-tests"/>
+		       <pathelement path="bin/"/>
+	       </classpath>
+            <batchtest fork="no">
+                <fileset dir="test">
+                    <include name="**/*Test*.java"/>
+		    <!-- Ignore helper classes that do not contain test cases -->
+                    <exclude name="**/*_scaffolding.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="testSingle" depends="compile.tests" description="Run all unit test cases">
+        <property name="testclass" value="triangle.Triangle_ESTest"/>
+	<property name="testcases" value=""/>
+        <echo message="Running unit tests ..."/>
+        <junit printsummary="true"
+               showoutput="true"
+	       haltonfailure="false"
+	       fork="no">
+            <formatter type="plain" usefile="false"/>
+
+	       <classpath>
+		       <pathelement path="${junit.jar}"/>
+		       <pathelement path="${evosuite-rt}"/>
+		       <pathelement path="bin-tests"/>
+		       <pathelement path="bin"/>
+	       </classpath>
+	    <test name="${testclass}" methods="${testcase}"/>
+        </junit>
+    </target>
+
+    <!-- Target to compile the project -->
+    <target name="mutate" depends="init" description="Compile">
+        <javac srcdir="src"
+               destdir="bin"
+               debug="yes"
+               fork="yes"
+               executable="${major}">
+
+            <compilerarg value="${mutator}"/>
+            <compilerarg value="-J-Dmajor.export.mutants=true"/>
+            <compilerarg value="-J-Dmajor.export.context=true"/>
+        </javac>
+    </target>
+
+    <!-- The adapted mutation test target -->
+    <target name="mutation.test" description="Run mutation analysis for all unit test cases">
+        <echo message="Running mutation analysis for all tests..."/>
+        <junit printsummary="false"
+               showoutput="false"
+	       fork="no"
+
+               mutationAnalysis="true"
+               sort="sort_methods"
+               coverage="true"
+               resultFile="results.csv"
+               killDetailsFile="killed.csv"
+	       excludeFile="${major.exclude}"
+               exportCovMap="true"
+               exportKillMap="true">
+
+	       <classpath>
+		       <pathelement path="mutants"/>
+		       <pathelement path="${evosuite-rt}"/>
+		       <pathelement path="bin-tests"/>
+		       <pathelement path="bin"/>
+	       </classpath>
+            <batchtest fork="false">
+                <fileset dir="test">
+                    <include name="**/*Test*.java"/>
+		    <!-- Ignore helper classes that do not contain test cases -->
+                    <exclude name="**/*_scaffolding.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- Targets for selected test cases -->
+    <target name="mutation.testSingle" description="Run mutation analysis for all unit test cases">
+        <property name="testclass" value="triangle.Triangle_ESTest"/>
+	<property name="testcases" value=""/>
+        <echo message="Running mutation analysis for single tests..."/>
+        <junit printsummary="false"
+               showoutput="false"
+
+               mutationAnalysis="true"
+	       sort="sort_methods"
+               resultFile="results.csv"
+               killDetailsFile="killed.csv"
+               excludeFile="${major.exclude}"
+               exportCovMap="true"
+               exportKillMap="true">
+
+	       <classpath>
+		       <pathelement path="mutants"/>
+		       <pathelement path="${evosuite-rt}"/>
+		       <pathelement path="bin-tests"/>
+		       <pathelement path="bin"/>
+	       </classpath>
+	       <test name="${testclass}" methods="${testcase}"/>
+        </junit>
+    </target>
+</project>

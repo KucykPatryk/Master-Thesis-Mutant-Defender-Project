@@ -8,7 +8,7 @@ class Attacker:
     # Generates mutants with context and log files
     @staticmethod
     def generate_mutants():
-        run(['./' + 'run_generation.sh'], cwd='../generation/')
+        run(['./' + 'run_mutant_generation.sh'], cwd='../generation/')
 
 
 

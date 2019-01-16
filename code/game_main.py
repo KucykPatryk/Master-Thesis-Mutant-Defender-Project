@@ -1,6 +1,8 @@
+from os import path
+
 # Import classes
 from classes.attacker import Attacker
-#from classes.defender import Defender
+from classes.defender import Defender
 
 """
 Main file for handling everything by calling other classes in desired way
@@ -10,7 +12,7 @@ Place program to be played on in /generation/src/'code file'
 
 # Instances of attacker and defender
 attacker = Attacker()
-#defender = Defender()
+defender = Defender()
 
 
 """
@@ -25,8 +27,10 @@ Returns:
 
 
 def generate_sets():
-    attacker.generate_mutants()
-    # defender.generate_tests()
+    if path.isdir('../generation/mutants') == 0:
+        attacker.generate_mutants()
+    if path.isdir('../generation/evosuite-tests') == 0:
+        defender.generate_tests()
 
 
 # Main function to run it all

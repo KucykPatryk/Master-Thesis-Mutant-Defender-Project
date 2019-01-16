@@ -8,4 +8,4 @@ class Defender:
     # Generates mutants with context and log files
     @staticmethod
     def generate_tests():
-        run(['./' + 'run_generation.sh'], cwd='../generation/')
+        run(['./' + 'run_tests_generation.sh'], cwd='../generation/')
