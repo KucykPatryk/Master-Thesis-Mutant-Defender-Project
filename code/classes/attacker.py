@@ -1,9 +1,14 @@
+from subprocess import run
+
+
 class Attacker:
     def __init__(self):
-        # ...
+        return
 
-    def generate_mutants(self):
-        # TODO generate mutants here
+    # Generates mutants with context and log files
+    @staticmethod
+    def generate_mutants():
+        run(['./' + 'run_generation.sh'], cwd='../generation/')
 
 
 

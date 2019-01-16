@@ -1,17 +1,16 @@
 # Import classes
 from classes.attacker import Attacker
-from classes.defender import Defender
+#from classes.defender import Defender
 
 """
 Main file for handling everything by calling other classes in desired way
-"""
 
-# The name of desired program
-program_name = 'Triangle.java'
+Place program to be played on in /generation/src/'code file'
+"""
 
 # Instances of attacker and defender
 attacker = Attacker()
-defender = Defender()
+#defender = Defender()
 
 
 """
@@ -25,7 +24,7 @@ Returns:
 """
 
 
-def generate_sets(program):
+def generate_sets():
     attacker.generate_mutants()
     # defender.generate_tests()
 
@@ -35,7 +34,7 @@ def main():
     # TODO write the function
 
     # Generate mutants and tests for a given program
-    generate_sets(program_name)
+    generate_sets()
 
     # Read the generated files
 

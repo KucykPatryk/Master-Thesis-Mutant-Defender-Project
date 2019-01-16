@@ -1,6 +1,11 @@
+from subprocess import run
+
+
 class Defender:
     def __init__(self):
-        # ...
+        return
 
-    def generate_tests(self):
-        # TODO generate tests here
+    # Generates mutants with context and log files
+    @staticmethod
+    def generate_tests():
+        run(['./' + 'run_generation.sh'], cwd='../generation/')
