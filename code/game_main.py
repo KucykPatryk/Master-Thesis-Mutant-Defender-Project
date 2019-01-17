@@ -40,7 +40,7 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
-    # Read the generated files
+    # print(attacker.m_set.return_mutants_count())
 
 
 if __name__ == "__main__":

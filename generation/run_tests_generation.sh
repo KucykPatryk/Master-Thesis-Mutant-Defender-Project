@@ -6,7 +6,7 @@ export PATH=$PWD/bin:/usr/lib/jvm/java-1.8.0-openjdk-amd64/bin/:$PATH # Change t
 #export CLASSPATH=target/classes:evosuite-standalone-runtime-1.0.6.jar:evosuite-tests:junit-4.12.jar:hamcrest-core-1.3.jar
 
 echo
-echo "Generating tests"
+echo "Generating and compiling tests"
 echo "(ant compile.tests)"
 echo
 
@@ -15,6 +15,8 @@ echo
 
 #export EVOSUITE=java -jar libs/evosuite-1.0.6.jar
 
-javac testing/triangle/Triangle.java
+javac testing/*/*.java
 
 java -jar libs/evosuite-1.0.6.jar -class triangle.Triangle -projectCP testing/
+
+ant compile.tests

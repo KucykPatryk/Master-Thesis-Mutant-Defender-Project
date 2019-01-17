@@ -42,7 +42,7 @@
     <target name="compile.tests" depends="compile" description="Compile all tests">
 	<delete dir="bin-tests" quiet="true" />
         <mkdir dir="bin-tests" />
-        <javac srcdir="src"
+        <javac srcdir="evosuite-tests"
                destdir="bin-tests"
 	       debug="yes"
 	       deprecation="false"
@@ -149,6 +149,7 @@
     <target name="mutation.testSingle" description="Run mutation analysis for all unit test cases">
         <property name="testclass" value="triangle.Triangle_ESTest"/>
 	<property name="testcases" value=""/>
+	<property name="major-exclude" value="exculde_mutants.txt"/>
         <echo message="Running mutation analysis for single tests..."/>
         <junit printsummary="false"
                showoutput="false"
@@ -157,7 +158,7 @@
 	       sort="sort_methods"
                resultFile="results.csv"
                killDetailsFile="killed.csv"
-               excludeFile="${major.exclude}"
+               excludeFile="${major-exclude}"
                exportCovMap="true"
                exportKillMap="true">
 
