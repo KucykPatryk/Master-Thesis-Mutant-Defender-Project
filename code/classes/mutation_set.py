@@ -3,6 +3,8 @@ import random
 from .global_variables import *
 
 
+# Class representing the whole mutation set
+
 class MutationSet:
     def __init__(self, mutants, count):
         self.mutants_list = mutants  # A list of available mutants and their properties
@@ -18,15 +20,17 @@ class MutationSet:
 
     def create_subset(self, ids_list):
         subset = list()
-        for i in range(SUBSET_SIZE):
+        for i in range(MUTANTS_SUBSET_SIZE):
             subset.append(self.mutants_list[ids_list[i]])
         return subset
 
     # Same as above, just random with n mutants
-    def create_random_subset(self, n):
-        subset = random.sample(self.mutants_list, n)
+    def create_random_subset(self):
+        subset = random.sample(self.mutants_list, MUTANTS_SUBSET_SIZE)
         return subset
 
+
+# Class representing the created subset
 
 class MutationSubset(MutationSet):
     def __init__(self, mutants_subset, count):
@@ -38,7 +42,7 @@ class MutationSubset(MutationSet):
         sorted_ids = list(range(1, self.mutants_count + 1))
         subset_ids = list()
 
-        for i in range(SUBSET_SIZE):
+        for i in range(MUTANTS_SUBSET_SIZE):
             subset_ids.append(int(self.mutants_list[i].split(':')[0]))
 
         sorted_ids = [e for e in sorted_ids if e not in subset_ids]

@@ -15,16 +15,13 @@ attacker = Attacker()
 defender = Defender()
 
 
-"""
-Generate sets for mutants and tests
-
-Parameters:
-    program: name of the program, eg. Name.java
-
-Returns:
-    nothing
-"""
-
+# Generate sets for mutants and tests
+#
+# Parameters:
+#     program: name of the program, eg. Name.java
+#
+# Returns:
+#     nothing
 
 def generate_sets():
     if path.isdir('../generation/mutants') == 0:
@@ -33,15 +30,18 @@ def generate_sets():
         defender.generate_tests()
 
 
+def execute_testing():
+    return
+
+
 # Main function to run it all
 def main():
-    # TODO write the function
-
     # Generate mutants and tests for a given program
     generate_sets()
 
     # print(attacker.m_subset.excluded_sorted_ids)
-    attacker.m_subset.create_exclude_ids_file()
+    # attacker.m_subset.create_exclude_ids_file()
+    # print(defender.tests_ids)
 
 
 if __name__ == "__main__":
