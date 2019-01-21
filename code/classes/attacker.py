@@ -8,8 +8,9 @@ from .global_variables import *
 
 class Attacker:
     def __init__(self):
-        self.m_set = MutationSet(self.read_mutants())
-        self.m_subset = MutationSubset(self.m_set.create_random_subset(SUBSET_SIZE))
+        self.mutants_list = self.read_mutants()
+        self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
+        self.m_subset = MutationSubset(self.m_set.create_random_subset(SUBSET_SIZE), len(self.mutants_list))
 
     # Generates mutants with context and log files
     @staticmethod

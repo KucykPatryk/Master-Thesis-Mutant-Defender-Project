@@ -40,8 +40,8 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
-    #print(attacker.m_subset.return_mutant_ids())
-    attacker.m_subset.create_n_mutant_ids_file()
+    # print(attacker.m_subset.excluded_sorted_ids)
+    attacker.m_subset.create_exclude_ids_file()
 
 
 if __name__ == "__main__":

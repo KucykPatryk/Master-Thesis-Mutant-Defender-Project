@@ -4,9 +4,9 @@ from .global_variables import *
 
 
 class MutationSet:
-    def __init__(self, mutants):
+    def __init__(self, mutants, count):
         self.mutants_list = mutants  # A list of available mutants and their properties
-        self.mutants_count = len(self.mutants_list)  # Number of mutants
+        self.mutants_count = count  # Number of all mutants
 
     # Creates a subset with given mutant ids
     #
@@ -29,20 +29,24 @@ class MutationSet:
 
 
 class MutationSubset(MutationSet):
-    def __init__(self, mutants_subset):
-        super(MutationSubset, self).__init__(mutants_subset)
-        self.sorted_ids = self.return_mutant_ids()
+    def __init__(self, mutants_subset, count):
+        super(MutationSubset, self).__init__(mutants_subset, count)
+        self.excluded_sorted_ids = self.excluded_mutant_ids()
 
-    # Produce a sorted list of mutant ids from the subset
-    def return_mutant_ids(self):
-        sorted_ids = list()
+    # Produce a sorted list of mutant ids not from the subset
+    def excluded_mutant_ids(self):
+        sorted_ids = list(range(1, self.mutants_count + 1))
+        subset_ids = list()
+
         for i in range(SUBSET_SIZE):
-            sorted_ids.append(self.mutants_list[i].split(':')[0])
-        sorted_ids.sort(key=int)
+            subset_ids.append(int(self.mutants_list[i].split(':')[0]))
+
+        sorted_ids = [e for e in sorted_ids if e not in subset_ids]
+        # sorted_ids.sort(key=int)
         return sorted_ids
 
-    # Creates a file with only ids of the subset (eg. for the exculde mutants file)
-    def create_n_mutant_ids_file(self):
+    # Creates a file with only ids of the not in the subset (eg. for the exclude mutants file)
+    def create_exclude_ids_file(self):
         with open('../generation/exclude_mutants.txt', 'w+') as f:
-            f.writelines('%s\n' % l for l in self.sorted_ids)
+            f.writelines('%s\n' % l for l in self.excluded_sorted_ids)
         return
