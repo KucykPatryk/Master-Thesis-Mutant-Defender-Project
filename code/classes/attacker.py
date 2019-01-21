@@ -1,11 +1,15 @@
 from subprocess import run
 
 from .mutation_set import MutationSet
+from .mutation_set import MutationSubset
+
+from .global_variables import *
 
 
 class Attacker:
     def __init__(self):
         self.m_set = MutationSet(self.read_mutants())
+        self.m_subset = MutationSubset(self.m_set.create_random_subset(SUBSET_SIZE))
 
     # Generates mutants with context and log files
     @staticmethod
