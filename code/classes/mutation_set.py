@@ -31,6 +31,7 @@ class MutationSet:
 class MutationSubset(MutationSet):
     def __init__(self, mutants_subset):
         super(MutationSubset, self).__init__(mutants_subset)
+        self.sorted_ids = self.return_mutant_ids()
 
     # Produce a sorted list of mutant ids from the subset
     def return_mutant_ids(self):
@@ -42,4 +43,6 @@ class MutationSubset(MutationSet):
 
     # Creates a file with only ids of the subset (eg. for the exculde mutants file)
     def create_n_mutant_ids_file(self):
+        with open('../generation/exclude_mutants.txt', 'w+') as f:
+            f.writelines('%s\n' % l for l in self.sorted_ids)
         return

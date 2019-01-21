@@ -149,7 +149,7 @@
     <target name="mutation.testSingle" description="Run mutation analysis for all unit test cases">
         <property name="testclass" value="triangle.Triangle_ESTest"/>
 	<property name="testcases" value=""/>
-	<property name="major-exclude" value="exculde_mutants.txt"/>
+	<property name="major-exclude" value="exclude_mutants.txt"/>
         <echo message="Running mutation analysis for single tests..."/>
         <junit printsummary="false"
                showoutput="false"

@@ -41,6 +41,7 @@ def main():
     generate_sets()
 
     #print(attacker.m_subset.return_mutant_ids())
+    attacker.m_subset.create_n_mutant_ids_file()
 
 
 if __name__ == "__main__":
