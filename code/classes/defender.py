@@ -10,6 +10,7 @@ class Defender:
     def __init__(self):
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
+        self.t_subset = TestSubset(self.t_suite.create_random_subset(), len(self.tests_ids))
 
     # Generates mutants with context and log files
     @staticmethod
@@ -20,7 +21,7 @@ class Defender:
     @staticmethod
     def read_test_ids():
         ids = list()
-        with open('../generation/evosuite-tests/triangle/Triangle_ESTest.java') as f:
+        with open('../generation/evosuite-tests/' + TESTS_FOLDER_NAME + '/' + TESTS_FILE_NAME) as f:
             for line in f:
                 if line[:13] in '  public void':
                     ln = line.split()

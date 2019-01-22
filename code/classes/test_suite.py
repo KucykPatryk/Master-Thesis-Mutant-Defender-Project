@@ -32,6 +32,6 @@ class TestSuite:
 
 # Class representing the created subset
 
-class TestSubset:
-    def __init__(self):
-        return
+class TestSubset(TestSuite):
+    def __init__(self, subset_ids, count):
+        super(TestSubset, self).__init__(subset_ids, count)

@@ -21,7 +21,7 @@ class MutationSet:
     def create_subset(self, ids_list):
         subset = list()
         for i in range(MUTANTS_SUBSET_SIZE):
-            subset.append(self.mutants_list[ids_list[i]])
+            subset.append(self.mutants_list[ids_list[i] - 1])
         return subset
 
     # Same as above, just random with n mutants
@@ -36,6 +36,7 @@ class MutationSubset(MutationSet):
     def __init__(self, mutants_subset, count):
         super(MutationSubset, self).__init__(mutants_subset, count)
         self.excluded_sorted_ids = self.excluded_mutant_ids()
+        self.create_exclude_ids_file()
 
     # Produce a sorted list of mutant ids not from the subset
     def excluded_mutant_ids(self):
@@ -53,4 +54,3 @@ class MutationSubset(MutationSet):
     def create_exclude_ids_file(self):
         with open('../generation/exclude_mutants.txt', 'w+') as f:
             f.writelines('%s\n' % l for l in self.excluded_sorted_ids)
-        return

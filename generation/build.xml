@@ -125,7 +125,7 @@
                coverage="true"
                resultFile="results.csv"
                killDetailsFile="killed.csv"
-	       excludeFile="${major.exclude}"
+	       excludeFile="${major-exclude}"
                exportCovMap="true"
                exportKillMap="true">
 
@@ -136,7 +136,7 @@
 		       <pathelement path="bin"/>
 	       </classpath>
             <batchtest fork="false">
-                <fileset dir="test">
+                <fileset dir="evosuite-tests">
                     <include name="**/*Test*.java"/>
 		    <!-- Ignore helper classes that do not contain test cases -->
                     <exclude name="**/*_scaffolding.java"/>
@@ -146,16 +146,18 @@
     </target>
 
     <!-- Targets for selected test cases -->
-    <target name="mutation.testSingle" description="Run mutation analysis for all unit test cases">
+    <target name="mutation.testSelected" description="Run mutation analysis for all unit test cases">
         <property name="testclass" value="triangle.Triangle_ESTest"/>
-	<property name="testcases" value=""/>
+	<property name="testcase" value="test00,test01,test02"/>
 	<property name="major-exclude" value="exclude_mutants.txt"/>
-        <echo message="Running mutation analysis for single tests..."/>
+        <echo message="Running mutation analysis for selected tests..."/>
         <junit printsummary="false"
                showoutput="false"
+	       fork="no"
 
                mutationAnalysis="true"
 	       sort="sort_methods"
+	       coverage="true"
                resultFile="results.csv"
                killDetailsFile="killed.csv"
                excludeFile="${major-exclude}"
