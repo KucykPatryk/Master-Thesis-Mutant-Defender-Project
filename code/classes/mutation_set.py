@@ -1,5 +1,7 @@
 import random
 
+from .mutant import Mutant
+
 from .global_variables import *
 
 
@@ -9,6 +11,11 @@ class MutationSet:
     def __init__(self, mutants, count):
         self.mutants_list = mutants  # A list of available mutants and their properties
         self.mutants_count = count  # Number of all mutants
+        self.mutants = list()  # All mutants where the id is index + 1
+
+        # Fill up the lists with unique mutants
+        for m in range(self.mutants_count):
+            self.mutants.append(Mutant(m + 1, 0))
 
     # Creates a subset with given mutant ids
     #
@@ -37,6 +44,8 @@ class MutationSubset(MutationSet):
         super(MutationSubset, self).__init__(mutants_subset, count)
         self.excluded_sorted_ids = self.excluded_mutant_ids()
         self.create_exclude_ids_file()
+        self.survived = 0  # How many mutants survived
+        self.killed = 0  # How many were killed
 
     # Produce a sorted list of mutant ids not from the subset
     def excluded_mutant_ids(self):
@@ -54,3 +63,26 @@ class MutationSubset(MutationSet):
     def create_exclude_ids_file(self):
         with open('../generation/exclude_mutants.txt', 'w+') as f:
             f.writelines('%s\n' % l for l in self.excluded_sorted_ids)
+
+    # Update the survived/killed value
+    def update_survived_killed(self, s, k):
+        self.survived = s
+        self.killed = k
+
+    # Update mutant values
+    #
+    # Parameters:
+    #     won: True if won or False if lost
+    #     ids: a list with mutant ids that were killed
+    #
+    # Returns:
+    #     nothing
+    def update_mutants(self, won, ids):
+        for i in range(len(ids)):
+            # Give 1 point if subset won or 0 else
+            if won:
+                score = 1
+            else:
+                score = 0
+
+            self.mutants[int(ids[i])].update_values(score)

@@ -11,6 +11,8 @@ class Defender:
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
         self.t_subset = TestSubset(self.t_suite.create_random_subset(), len(self.tests_ids))
+        self.won = 0  # Times won against attacker
+        self.lost = 0  # Times lost against attacker
 
     # Generates mutants with context and log files
     @staticmethod
@@ -28,3 +30,21 @@ class Defender:
                     tn = ln[2].split('(')[0]
                     ids.append(tn)
         return ids
+
+    # Add a win
+    def win(self):
+        self.won += 1
+
+    # Add a loss
+    def lose(self):
+        self.lost += 1
+
+    # Updates values after a round
+    def update(self, won, killed, ids):
+        if won:
+            self.win()
+        else:
+            self.lose()
+
+        self.t_subset.update_killed(killed)
+        self.t_subset.update_tests(won, ids)
