@@ -10,10 +10,14 @@ class Test:
         self.killed_times = 0  # How many times this test killed mutants
         # self.Killed_last_round = False  # True if killed a mutant in last round
 
-    # Updates values of this test
-    def update_values(self, score):
+    # Update the kill count
+    def update_kills(self):
+        self.killed_times += 1
+        # print("T ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+
+    # Update score
+    def update_score(self, score):
         self.score.add_points(score)
         # self.survived_times += survived
-        self.killed_times += 1
 
-        # print("ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+        # print("T ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)

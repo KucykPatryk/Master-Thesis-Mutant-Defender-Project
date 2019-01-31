@@ -36,11 +36,11 @@ class Attacker:
         self.lost += 1
 
     # Updates values after a round
-    def update(self, won, summary, ids):
+    def update(self, won, summary, ids, kill_ratio):
         if won:
             self.win()
         else:
             self.lose()
 
         self.m_subset.update_survived_killed(summary[3], summary[2])
-        self.m_subset.update_mutants(won, ids)
+        self.m_subset.update_mutants(ids, kill_ratio)

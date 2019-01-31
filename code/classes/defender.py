@@ -40,11 +40,11 @@ class Defender:
         self.lost += 1
 
     # Updates values after a round
-    def update(self, won, killed, ids):
+    def update(self, won, killed, ids, kill_ratio):
         if won:
             self.win()
         else:
             self.lose()
 
         self.t_subset.update_killed(killed)
-        self.t_subset.update_tests(won, ids)
+        self.t_subset.update_tests(ids, kill_ratio)

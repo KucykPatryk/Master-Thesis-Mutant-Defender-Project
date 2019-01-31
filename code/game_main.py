@@ -48,28 +48,29 @@ def update_results():
     with open('../generation/summary.csv') as f:
         f.readline()
         summary = f.readline().split(',')
+        kill_ratio = int(summary[2])/MUTANTS_SUBSET_SIZE  # The ratio of killed mutants by the tests
 
-    if int(summary[2]) / int(summary[1]) > WINNING_THRESHOLD:
+    if kill_ratio > WINNING_THRESHOLD:
         attacker_won = False
 
     with open('../generation/killMap.csv') as f2:
         f2.readline()
         tests = list()  # a list of test ids that killed a mutant
         mutants = list()  # a list of mutant ids that were killed
-        for i in range(int(summary[2])):
-            line = f2.readline().split(',')
+        for line in f2:
+            line = line.split(',')
             tests.append(line[0])
             mutants.append((line[1]))
 
-    attacker.update(attacker_won, summary, mutants)
-    defender.update(not attacker_won, summary[2], tests)
+    attacker.update(attacker_won, summary, mutants, 1 - kill_ratio)
+    defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
 # Main function to run it all
 def main():
     # Generate mutants and tests for a given program
     generate_sets()
-    # execute_testing(defender.t_subset.tests_ids)
+    execute_testing(defender.t_subset.tests_ids)
     update_results()
 
 

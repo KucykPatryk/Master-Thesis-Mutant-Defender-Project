@@ -15,7 +15,7 @@ class MutationSet:
 
         # Fill up the lists with unique mutants
         for m in range(self.mutants_count):
-            self.mutants.append(Mutant(m + 1, 0))
+            self.mutants.append(Mutant(m, 0))
 
     # Creates a subset with given mutant ids
     #
@@ -77,12 +77,10 @@ class MutationSubset(MutationSet):
     #
     # Returns:
     #     nothing
-    def update_mutants(self, won, ids):
+    def update_mutants(self, ids, kill_ratio):
         for i in range(len(ids)):
-            # Give 1 point if subset won or 0 else
-            if won:
-                score = 1
-            else:
-                score = 0
-
-            self.mutants[int(ids[i])].update_values(score)
+            self.mutants[int(ids[i])].update_kills()
+        for x in self.mutants_list:
+            x_id = int(x.split(':')[0])
+            if x_id not in ids:
+                self.mutants[x_id].update_score(kill_ratio)
