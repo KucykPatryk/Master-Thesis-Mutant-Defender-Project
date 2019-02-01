@@ -77,10 +77,14 @@ class MutationSubset(MutationSet):
     #
     # Returns:
     #     nothing
+
     def update_mutants(self, ids, kill_ratio):
+        # Updated killed mutants
         for i in range(len(ids)):
             self.mutants[int(ids[i])].update_kills()
+            self.mutants[int(ids[i])].update_score(-kill_ratio)
+        # Update survived mutants
         for x in self.mutants_list:
             x_id = int(x.split(':')[0])
-            if x_id not in ids:
+            if str(x_id) not in ids:
                 self.mutants[x_id].update_score(kill_ratio)

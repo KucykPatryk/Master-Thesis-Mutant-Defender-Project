@@ -60,7 +60,8 @@ class TestSubset(TestSuite):
     def update_tests(self, ids, kill_ratio):
         for i in range(len(ids)):
             self.tests[int(ids[i])].update_kills()
-        for x in self.tests_ids:
-            x_id = int(x[4:])
-            if x_id not in ids:
-                self.tests[x_id].update_score(kill_ratio)
+            self.tests[int(ids[i])].update_score(kill_ratio)
+        # for x in self.tests_ids:
+        #     x_id = int(x[4:])
+        #     if str(x_id) not in ids:
+        #         self.tests[x_id].update_score(kill_ratio)
