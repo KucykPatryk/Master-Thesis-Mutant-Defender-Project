@@ -70,8 +70,26 @@ def update_results():
 def main():
     # Generate mutants and tests for a given program
     generate_sets()
-    execute_testing(defender.t_subset.tests_ids)
-    update_results()
+    # Create mutant and test set instances
+
+    # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
+    for x in range(GAME_ITERATIONS):
+        print("ROUND: ", x)
+        # Select random subset for tests and mutants
+        if x > 0:
+            r_m_subset = attacker.new_subset()
+            r_t_subset = defender.new_subset()
+        # Filter tests, so they all cover at least one mutant
+
+        # Calculate features
+
+        # Model selects the tests/mutants
+
+        # Execute
+        # execute_testing(defender.t_subset.tests_ids)
+
+        # Update results
+        update_results()
 
 
 if __name__ == "__main__":

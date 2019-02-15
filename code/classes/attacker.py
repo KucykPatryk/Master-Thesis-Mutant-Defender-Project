@@ -10,7 +10,7 @@ class Attacker:
     def __init__(self):
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
-        self.m_subset = MutationSubset(self.m_set.create_random_subset(), len(self.mutants_list))
+        self.m_subset = self.new_subset()
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
 
@@ -26,6 +26,10 @@ class Attacker:
             mutants_list = f.read().splitlines()
 
         return mutants_list
+
+    def new_subset(self):
+        m_subset = MutationSubset(self.m_set.create_random_subset(), len(self.mutants_list))
+        return m_subset
 
     # Add a win
     def win(self):
