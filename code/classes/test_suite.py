@@ -15,7 +15,7 @@ class TestSuite:
 
         # Fill up the lists with unique tests
         for t in range(self.tests_count):
-            self.tests.append(Test(t, 0))
+            self.tests.append(Test(t + 1, 0))
 
     # Creates a subset with given test ids
     #

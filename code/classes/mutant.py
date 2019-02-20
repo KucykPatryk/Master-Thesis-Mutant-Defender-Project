@@ -14,11 +14,11 @@ class Mutant:
     # Update the kill count
     def update_kills(self):
         self.killed_times += 1
-        print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+        # print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
 
     # Update score
     def update_score(self, score):
         self.score.add_points(score)
         # self.survived_times += survived
 
-        print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+        # print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)

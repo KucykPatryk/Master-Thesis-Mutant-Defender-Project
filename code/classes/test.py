@@ -20,4 +20,4 @@ class Test:
         self.score.add_points(score)
         # self.survived_times += survived
 
-        print("T ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+        # print("T ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)

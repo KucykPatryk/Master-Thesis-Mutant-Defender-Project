@@ -15,7 +15,7 @@ class MutationSet:
 
         # Fill up the lists with unique mutants
         for m in range(self.mutants_count):
-            self.mutants.append(Mutant(m, 0))
+            self.mutants.append(Mutant(m + 1, 0))
 
     # Creates a subset with given mutant ids
     #

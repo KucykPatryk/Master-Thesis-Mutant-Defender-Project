@@ -66,20 +66,53 @@ def update_results():
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
+# Returns an array of test ids with their actual method ids
+def test_map_array():
+    tests = [0]
+
+    with open('../generation/testMap.csv') as tm:
+        tm.readline()
+        for line in tm:
+            line = line.split(',')
+            tests.append(line[1][25:-2])
+
+    return tests
+
+
+# Save and store covered mutants by tests in a 2D array, where x is mutant id and y is test id with 0 for uncovered
+def cov_map_2d_array():
+    cov_tests = [[-1 for x in range(MUTANTS_COUNT + 1)] for y in range(TEST_COUNT + 1)]
+
+    with open('../generation/covMap.csv') as cv:
+        cv.readline()
+
+        for line in cv:
+            line = line.split(',')
+            m = int(line[0])
+            t = int(line[1])
+            cov_tests[m][t] = t
+
+    return cov_tests
+
+
 # Main function to run it all
 def main():
     # Generate mutants and tests for a given program
     generate_sets()
-    # Create mutant and test set instances
+
+    # cov_tests = cov_map_2d_array()
 
     # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
     for x in range(GAME_ITERATIONS):
         print("ROUND: ", x)
         # Select random subset for tests and mutants
         if x > 0:
-            r_m_subset = attacker.new_subset()
-            r_t_subset = defender.new_subset()
-        # Filter tests, so they all cover at least one mutant
+            attacker.m_subset = attacker.new_subset()
+            defender.t_subset = defender.new_subset()
+
+        # Filter the tests, so they all cover at least one mutant
+
+        # tests = test_map_array()
 
         # Calculate features
 
