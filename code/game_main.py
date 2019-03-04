@@ -1,5 +1,6 @@
 from subprocess import run
 from os import path
+import random
 
 # Import classes
 from classes.attacker import Attacker
@@ -66,33 +67,45 @@ def update_results():
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
-# Returns an array of test ids with their actual method ids
-def test_map_array():
-    tests = [0]
+# Save and store covered mutants by tests in a 2D array, where x is test id and y is mutant id with 0 for uncovered
+# def cov_map_2d_array():
+#     cov_tests = [[-1 for x in range(MUTANTS_COUNT + 1)] for y in range(TEST_COUNT + 1)]
+#
+#     with open('../generation/covMap.csv') as cv:
+#         cv.readline()
+#
+#         for line in cv:
+#             line = line.split(',')
+#             t = int(line[0])
+#             m = int(line[1])
+#             cov_tests[t][m] = m
+#
+#     return cov_tests
 
-    with open('../generation/testMap.csv') as tm:
-        tm.readline()
-        for line in tm:
-            line = line.split(',')
-            tests.append(line[1][25:-2])
-
-    return tests
-
-
-# Save and store covered mutants by tests in a 2D array, where x is mutant id and y is test id with 0 for uncovered
-def cov_map_2d_array():
-    cov_tests = [[-1 for x in range(MUTANTS_COUNT + 1)] for y in range(TEST_COUNT + 1)]
+# Save and store covered mutants by tests in a dictionary, where key is test id and value is an array of mutant ids
+def cov_map_dic():
+    cov_tests = dict()
 
     with open('../generation/covMap.csv') as cv:
         cv.readline()
 
         for line in cv:
             line = line.split(',')
-            m = int(line[0])
-            t = int(line[1])
-            cov_tests[m][t] = t
+            t = int(line[0])
+            m = int(line[1])
+
+            if t in cov_tests:
+                cov_tests[t].append(m)
+            else:
+                cov_tests[t] = [m]
 
     return cov_tests
+
+
+# Randomly deletes n items from a list
+def delete_rand_items(items, n):
+    to_delete = set(random.sample(range(len(items)), n))
+    return [x for i, x in enumerate(items) if i not in to_delete]
 
 
 # Main function to run it all
@@ -100,29 +113,47 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
-    # cov_tests = cov_map_2d_array()
+    # Generate coverage map for filtering before the game starts
+    execute_testing(defender.t_suite.tests_ids)
+    test_mapping = test_map_array()
+    cov_map = cov_map_dic()
 
     # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
     for x in range(GAME_ITERATIONS):
         print("ROUND: ", x)
-        # Select random subset for tests and mutants
+        # Select random subset for mutants
         if x > 0:
             attacker.m_subset = attacker.new_subset()
-            defender.t_subset = defender.new_subset()
+            # defender.t_subset = defender.new_subset(defender.t_suite.create_random_subset())
 
         # Filter the tests, so they all cover at least one mutant
+        filtered_t_ids = list()
+        for t in cov_map:
+            for m in attacker.m_subset.mutants_list:
+                if int(m[:m.index(':')]) in cov_map[t]:
+                    filtered_t_ids.append(t)
+        # Filtered subset for tests
+        randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
 
-        # tests = test_map_array()
+        # Map test number ids to name ids
+        for i in range(TESTS_SUBSET_SIZE):
+            randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
+        # Create filtered test subset
+        defender.t_subset = defender.new_subset(defender.t_suite.create_subset(randomized_filtered_t_ids))
 
         # Calculate features
+
 
         # Model selects the tests/mutants
 
         # Execute
         # execute_testing(defender.t_subset.tests_ids)
 
+        # Update filters
+
+
         # Update results
-        update_results()
+        #update_results()
 
 
 if __name__ == "__main__":

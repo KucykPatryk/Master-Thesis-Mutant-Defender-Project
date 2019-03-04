@@ -9,7 +9,7 @@ from .global_variables import *
 
 class TestSuite:
     def __init__(self, tests, count):
-        self.tests_ids = tests  # A list of available tests as their names
+        self.tests_ids = tests  # A list of available tests as their name ids
         self.tests_count = count  # Number of all tests
         self.tests = list()  # All tests where the id is equal to index
 
@@ -28,7 +28,7 @@ class TestSuite:
     def create_subset(self, ids_list):
         subset = list()
         for i in range(TESTS_SUBSET_SIZE):
-            subset.append(self.tests_ids[ids_list[i]])
+            subset.append(self.tests_ids[int(ids_list[i])])
         return subset
 
     # Same as above, just random
@@ -58,9 +58,10 @@ class TestSubset(TestSuite):
     #     nothing
 
     def update_tests(self, ids, kill_ratio):
+        test_map = test_map_array()
         for i in range(len(ids)):
-            self.tests[int(ids[i])].update_kills()
-            self.tests[int(ids[i])].update_score(kill_ratio)
+            self.tests[test_map[int(ids[i])]].update_kills()
+            self.tests[test_map[int(ids[i])]].update_score(kill_ratio)
         # for x in self.tests_ids:
         #     x_id = int(x[4:])
         #     if str(x_id) not in ids:

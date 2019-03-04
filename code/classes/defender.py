@@ -10,7 +10,7 @@ class Defender:
     def __init__(self):
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
-        self.t_subset = self.new_subset()
+        self.t_subset = self.new_subset(self.t_suite.create_random_subset())
         self.won = 0  # Times won against attacker
         self.lost = 0  # Times lost against attacker
 
@@ -27,12 +27,12 @@ class Defender:
             for line in f:
                 if line[:13] in '  public void':
                     ln = line.split()
-                    tn = ln[2].split('(')[0]
+                    tn = ln[2].split('(')[0][4:]
                     ids.append(tn)
         return ids
 
-    def new_subset(self):
-        t_subset = TestSubset(self.t_suite.create_random_subset(), len(self.tests_ids))
+    def new_subset(self, create_method):
+        t_subset = TestSubset(create_method, len(self.tests_ids))
         return t_subset
 
     # Add a win

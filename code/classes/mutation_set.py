@@ -61,8 +61,8 @@ class MutationSubset(MutationSet):
 
     # Creates a file with only ids of the not in the subset (eg. for the exclude mutants file)
     def create_exclude_ids_file(self):
-        with open('../generation/exclude_mutants.txt', 'w+') as f:
-            f.writelines('%s\n' % l for l in self.excluded_sorted_ids)
+        with open('../generation/exclude_mutants.txt', 'w+') as ef:
+            ef.writelines('%s\n' % l for l in self.excluded_sorted_ids)
 
     # Update the survived/killed value
     def update_survived_killed(self, s, k):
