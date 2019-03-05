@@ -10,6 +10,7 @@ from .global_variables import *
 class MutationSet:
     def __init__(self, mutants, count):
         self.mutants_list = mutants  # A list of available mutants and their properties
+        self.mutants_ids = [x[:x.index(':')] for x in self.mutants_list]
         self.mutants_count = count  # Number of all mutants
         self.mutants = list()  # All mutants where the id is index + 1
 

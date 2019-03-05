@@ -1,6 +1,9 @@
 from subprocess import run
 from os import path
 import random
+import csv
+import copy
+from vowpalwabbit import pyvw
 
 # Import classes
 from classes.attacker import Attacker
@@ -108,52 +111,109 @@ def delete_rand_items(items, n):
     return [x for i, x in enumerate(items) if i not in to_delete]
 
 
+# Produces mutants features string
+#
+# Parameters:
+#     ids: mutant ids as list
+#     mc_dict: dictionary created from mutation.context file
+#
+# Returns:
+#     a concatenated string of mutants features for Vowpal Wabbit
+def produce_mutants_features(ids, mc_dict):
+    mf = ''
+    for row in mc_dict:
+        if row['mutantNo'] in ids:
+            mf += '| '
+            mf += row['mutationOperatorGroup'] + ':1 '
+            index = row['mutationOperator'].index(':')
+            mf += row['mutationOperator'][:index] + row['mutationOperator'][index + 1:] + ':1 '
+            mf += row['nodeTypeBasic'] + ':1 '
+            index = row['parentContextDetailed'].index(':')
+            mf += row['parentContextDetailed'][:index] + row['parentContextDetailed'][index + 1:] + ':1 '
+            if ':' in row['parentStmtContextDetailed']:
+                index = row['parentStmtContextDetailed'].index(':')
+                mf += \
+                    row['parentStmtContextDetailed'][:index] + row['parentStmtContextDetailed'][index + 1:] + ':1 '
+            else:
+                mf += row['parentStmtContextDetailed'] + ':1 '
+            if row['hasVariableChild'] == '1':
+                mf += 'hasVariableChild' + ':1'
+            elif row['hasOperatorChild'] == '1':
+                mf += 'hasOperatorChild' + ':1'
+            elif row['hasLiteralChild'] == '1':
+                mf += 'hasLiteralChild' + ':1'
+            mf += '\n'
+    return mf
+
+
 # Main function to run it all
 def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
-    # Generate coverage map for filtering before the game starts
-    execute_testing(defender.t_suite.tests_ids)
-    test_mapping = test_map_array()
-    cov_map = cov_map_dic()
+    # # Generate coverage map for filtering before the game starts
+    # execute_testing(defender.t_suite.tests_ids)
+    # test_mapping = test_map_array()
+    # cov_map = cov_map_dic()
 
-    # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
-    for x in range(GAME_ITERATIONS):
-        print("ROUND: ", x)
-        # Select random subset for mutants
-        if x > 0:
-            attacker.m_subset = attacker.new_subset()
-            # defender.t_subset = defender.new_subset(defender.t_suite.create_random_subset())
+    # Read the mutant contex information and store it in a dictionary for each row
+    mc = open('../generation/mutants.context')
+    mc_dict = csv.DictReader(mc)
 
-        # Filter the tests, so they all cover at least one mutant
-        filtered_t_ids = list()
-        for t in cov_map:
-            for m in attacker.m_subset.mutants_list:
-                if int(m[:m.index(':')]) in cov_map[t]:
-                    filtered_t_ids.append(t)
-        # Filtered subset for tests
-        randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
+    # Create the mutant Vowpal Wabbit model
+    vw_mutant = pyvw.vw(quiet=True, cb_explore_adf=True, epsilon=0.1)
 
-        # Map test number ids to name ids
-        for i in range(TESTS_SUBSET_SIZE):
-            randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
-        # Create filtered test subset
-        defender.t_subset = defender.new_subset(defender.t_suite.create_subset(randomized_filtered_t_ids))
+    # # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
+    # for x in range(GAME_ITERATIONS):
+    #     print("ROUND: ", x)
+    #     # Select random subset for mutants
+    #     if x > 0:
+    #         attacker.m_subset = attacker.new_subset()
+    #         # defender.t_subset = defender.new_subset(defender.t_suite.create_random_subset())
+    #
+    #     # Filter the tests, so they all cover at least one mutant
+    #     filtered_t_ids = list()
+    #     for t in cov_map:
+    #         for m in attacker.m_subset.mutants_ids:
+    #             if int(m) in cov_map[t]:
+    #                 filtered_t_ids.append(t)
+    #                 break
+    #     # Filtered subset for tests
+    #     randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
+    #
+    #     # Map test number ids to name ids
+    #     for i in range(TESTS_SUBSET_SIZE):
+    #         randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
+    #     # Create filtered test subset
+    #     defender.t_subset = defender.new_subset(defender.t_suite.create_subset(randomized_filtered_t_ids))
 
-        # Calculate features
+    # Calculate features
+
+    mutants_features = produce_mutants_features(attacker.m_subset.mutants_ids, mc_dict)
+    print(mutants_features)
+
+    # mf = vw_mutant.example('|')
 
 
-        # Model selects the tests/mutants
 
-        # Execute
-        # execute_testing(defender.t_subset.tests_ids)
+    # Mutant features
 
-        # Update filters
+    # Test features
 
 
-        # Update results
-        #update_results()
+    # Model selects the tests/mutants
+
+    # Execute
+    # execute_testing(defender.t_subset.tests_ids)
+
+    # Update filters
+
+
+    # Update results
+    #update_results()
+
+    # End of Game
+    mc.close()
 
 
 if __name__ == "__main__":
