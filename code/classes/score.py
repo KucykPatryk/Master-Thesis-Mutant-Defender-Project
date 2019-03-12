@@ -1,8 +1,8 @@
-# Class representing the point system
 class Score:
+    """ Class representing a point unit """
     def __init__(self, points):
         self.points = points
 
-    # Adds points by a value
     def add_points(self, value):
+        """ Add points by a value """
         self.points += value

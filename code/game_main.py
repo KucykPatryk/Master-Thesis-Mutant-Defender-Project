@@ -8,7 +8,6 @@ from vowpalwabbit import pyvw
 # Import classes
 from classes.attacker import Attacker
 from classes.defender import Defender
-
 from classes.global_variables import *
 
 """
@@ -22,31 +21,25 @@ attacker = Attacker()
 defender = Defender()
 
 
-# Generate sets for mutants and tests
-#
-# Parameters:
-#     program: name of the program, eg. Name.java
-#
-# Returns:
-#     nothing
-
 def generate_sets():
+    """ Generate sets for mutants and tests """
     if path.isdir('../generation/mutants') == 0:
         attacker.generate_mutants()
     if path.isdir('../generation/evosuite-tests') == 0:
         defender.generate_tests()
 
 
-# Do testing on selected mutants by a set of selected tests
 def execute_testing(testing_set):
+    """ Do testing on selected mutants by a set of selected tests """
     test_class = TESTS_FOLDER_NAME + '.' + TESTS_FILE_NAME[:-5]
-    test_case = ','.join(testing_set)
+    test_case = ','.join(['test' + e for e in testing_set])
+    print(test_case)
 
     run(['./run_tests.sh', test_class, test_case], cwd='../generation/')
 
 
-# Updating results after last round
 def update_results():
+    """ Updating results after last round """
     attacker_won = True
 
     with open('../generation/summary.csv') as f:
@@ -70,23 +63,9 @@ def update_results():
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
-# Save and store covered mutants by tests in a 2D array, where x is test id and y is mutant id with 0 for uncovered
-# def cov_map_2d_array():
-#     cov_tests = [[-1 for x in range(MUTANTS_COUNT + 1)] for y in range(TEST_COUNT + 1)]
-#
-#     with open('../generation/covMap.csv') as cv:
-#         cv.readline()
-#
-#         for line in cv:
-#             line = line.split(',')
-#             t = int(line[0])
-#             m = int(line[1])
-#             cov_tests[t][m] = m
-#
-#     return cov_tests
-
-# Save and store covered mutants by tests in a dictionary, where key is test id and value is an array of mutant ids
 def cov_map_dic():
+    """ Save and store covered mutants by tests in a dictionary,
+    where key is test id and value is an array of mutant ids """
     cov_tests = dict()
 
     with open('../generation/covMap.csv') as cv:
@@ -105,116 +84,143 @@ def cov_map_dic():
     return cov_tests
 
 
-# Randomly deletes n items from a list
 def delete_rand_items(items, n):
+    """ Randomly deletes n items from a list """
     to_delete = set(random.sample(range(len(items)), n))
     return [x for i, x in enumerate(items) if i not in to_delete]
 
 
-# Produces mutants features string
-#
-# Parameters:
-#     ids: mutant ids as list
-#     mc_dict: dictionary created from mutation.context file
-#
-# Returns:
-#     a concatenated string of mutants features for Vowpal Wabbit
 def produce_mutants_features(ids, mc_dict):
+    """ Produces mutants features string
+    :param ids: mutant ids as list
+    :param mc_dict: dictionary created from mutation.context file
+    :return: dictionary created from mutation.context file
+    """
     mf = ''
     for row in mc_dict:
         if row['mutantNo'] in ids:
+            # mf += row['mutantNo'] + '| '
             mf += '| '
-            mf += row['mutationOperatorGroup'] + ':1 '
+            mf += row['mutationOperatorGroup'] + ':1.0 '
             index = row['mutationOperator'].index(':')
-            mf += row['mutationOperator'][:index] + row['mutationOperator'][index + 1:] + ':1 '
-            mf += row['nodeTypeBasic'] + ':1 '
+            if row['mutationOperator'][0] == '<':  # Remove < signs
+                mf += row['mutationOperator'][1:index - 1] + row['mutationOperator'][index + 2:-1] + ':1 '
+            else:
+                mf += row['mutationOperator'][:index] + row['mutationOperator'][index + 1:] + ':1.0 '
+            mf += row['nodeTypeBasic'] + ':1.0 '
             index = row['parentContextDetailed'].index(':')
-            mf += row['parentContextDetailed'][:index] + row['parentContextDetailed'][index + 1:] + ':1 '
+            mf += row['parentContextDetailed'][:index] + row['parentContextDetailed'][index + 1:] + ':1.0 '
             if ':' in row['parentStmtContextDetailed']:
                 index = row['parentStmtContextDetailed'].index(':')
                 mf += \
-                    row['parentStmtContextDetailed'][:index] + row['parentStmtContextDetailed'][index + 1:] + ':1 '
+                    row['parentStmtContextDetailed'][:index] + row['parentStmtContextDetailed'][index + 1:] + ':1.0 '
             else:
                 mf += row['parentStmtContextDetailed'] + ':1 '
             if row['hasVariableChild'] == '1':
-                mf += 'hasVariableChild' + ':1'
+                mf += 'hasVariableChild' + ':1.0'
             elif row['hasOperatorChild'] == '1':
-                mf += 'hasOperatorChild' + ':1'
+                mf += 'hasOperatorChild' + ':1.0'
             elif row['hasLiteralChild'] == '1':
-                mf += 'hasLiteralChild' + ':1'
+                mf += 'hasLiteralChild' + ':1.0'
             mf += '\n'
+    mf = mf[:-1]
     return mf
 
 
-# Main function to run it all
+def filter_tests(cov_map, test_mapping):
+    """ Filter out tests that do not cover any mutants from the subset"""
+    filtered_t_ids = list()
+    for t in cov_map:
+        for m in attacker.m_subset.mutants_ids:
+            if int(m) in cov_map[t]:
+                filtered_t_ids.append(t)
+                break
+    # Filtered subset for tests
+    randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
+
+    # Map test number ids to name ids
+    for i in range(TESTS_SUBSET_SIZE):
+        randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
+
+    return randomized_filtered_t_ids
+
+
 def main():
+    """ Main function to run it all """
+
+    ''' Generate and create main parts before the loop '''
     # Generate mutants and tests for a given program
     generate_sets()
 
-    # # Generate coverage map for filtering before the game starts
-    # execute_testing(defender.t_suite.tests_ids)
-    # test_mapping = test_map_array()
-    # cov_map = cov_map_dic()
+    # Generate coverage map for filtering before the game starts
+    execute_testing(defender.t_suite.tests_ids)
+    test_mapping = test_map_array()
+    cov_map = cov_map_dic()
 
-    # Read the mutant contex information and store it in a dictionary for each row
+    # Read the mutant context information and store it in a dictionary for each row
     mc = open('../generation/mutants.context')
     mc_dict = csv.DictReader(mc)
 
-    # Create the mutant Vowpal Wabbit model
-    vw_mutant = pyvw.vw(quiet=True, cb_explore_adf=True, epsilon=0.1)
+    ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
+    for x in range(GAME_ITERATIONS):
+        print("ROUND: ", x)
+        # Select random subset for mutants
+        if x > 0:
+            attacker.m_subset = attacker.new_subset()
 
-    # # !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-!
-    # for x in range(GAME_ITERATIONS):
-    #     print("ROUND: ", x)
-    #     # Select random subset for mutants
-    #     if x > 0:
-    #         attacker.m_subset = attacker.new_subset()
-    #         # defender.t_subset = defender.new_subset(defender.t_suite.create_random_subset())
-    #
-    #     # Filter the tests, so they all cover at least one mutant
-    #     filtered_t_ids = list()
-    #     for t in cov_map:
-    #         for m in attacker.m_subset.mutants_ids:
-    #             if int(m) in cov_map[t]:
-    #                 filtered_t_ids.append(t)
-    #                 break
-    #     # Filtered subset for tests
-    #     randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
-    #
-    #     # Map test number ids to name ids
-    #     for i in range(TESTS_SUBSET_SIZE):
-    #         randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
-    #     # Create filtered test subset
-    #     defender.t_subset = defender.new_subset(defender.t_suite.create_subset(randomized_filtered_t_ids))
+        # Create filtered subset for tests
+        defender.t_subset = defender.new_subset(defender.t_suite.create_subset(filter_tests(cov_map, test_mapping)))
 
-    # Calculate features
+        if not RANDOM_SELECTION:  # Bandit agents
+            ''' Calculate features '''
+            # Mutant features
+            mutants_features = produce_mutants_features(attacker.m_subset.mutants_ids, mc_dict)
+            # print(mutants_features)
 
-    mutants_features = produce_mutants_features(attacker.m_subset.mutants_ids, mc_dict)
-    print(mutants_features)
+            # Test features
 
-    # mf = vw_mutant.example('|')
+            # Model selects the tests and mutants
+            m_pred = attacker.vw_mutant.predict(mutants_features)
+            # print(m_pred)
 
+            # Execute
+            execute_testing(defender.t_subset.tests_ids)
 
+            # Update results
+            update_results()
 
-    # Mutant features
+            # Model learns
+            if x < GAME_ITERATIONS - 1:
+                attacker.vw_mutant.learn()
+        else:  # Random selection
+            # Execute
+            execute_testing(defender.t_subset.tests_ids)
 
-    # Test features
-
-
-    # Model selects the tests/mutants
-
-    # Execute
-    # execute_testing(defender.t_subset.tests_ids)
-
-    # Update filters
-
-
-    # Update results
-    #update_results()
+            # Update results
+            update_results()
 
     # End of Game
     mc.close()
+    if not RANDOM_SELECTION:
+        attacker.vw_mutant.stop()
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Data for plotting
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2 * np.pi * t)
+
+    fig, ax = plt.subplots()
+    ax.plot(t, s)
+
+    ax.set(xlabel='time (s)', ylabel='voltage (mV)',
+           title='About as simple as it gets, folks')
+    ax.grid()
+
+    # fig.savefig("test.png")
+    plt.show()
