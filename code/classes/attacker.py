@@ -16,8 +16,9 @@ class Attacker:
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
         # Create the mutant Vowpal Wabbit model
-        # self.vw_mutant = VWWrapper('--quiet --cb_explore_adf --epsilon=0.1',
-        #                       '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+        self.vw_mutant = VWWrapper(
+            '--quiet --cb_explore_adf --epsilon=0.1',
+            '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
 
     @staticmethod
     def generate_mutants():
@@ -52,4 +53,4 @@ class Attacker:
             self.lose()
 
         self.m_subset.update_survived_killed(summary[3], summary[2])
-        self.m_subset.update_mutants(ids, kill_ratio)
+        self.m_set.update_mutants(ids, kill_ratio, self.m_subset.mutants_ids)

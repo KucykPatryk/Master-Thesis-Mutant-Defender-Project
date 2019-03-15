@@ -1,8 +1,9 @@
 from subprocess import run
-from os import path
+from os import path, rename
 import random
 import csv
-import copy
+import matplotlib.pyplot as plt
+import numpy as np
 from vowpalwabbit import pyvw
 
 # Import classes
@@ -63,12 +64,12 @@ def update_results():
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
-def cov_map_dic():
+def cov_map_dic(file_path='../generation/covMap.csv'):
     """ Save and store covered mutants by tests in a dictionary,
     where key is test id and value is an array of mutant ids """
     cov_tests = dict()
 
-    with open('../generation/covMap.csv') as cv:
+    with open(file_path) as cv:
         cv.readline()
 
         for line in cv:
@@ -145,6 +146,34 @@ def filter_tests(cov_map, test_mapping):
     return randomized_filtered_t_ids
 
 
+def plot_results(display, save):
+    """ Plot results, and display, or save them as png files"""
+    # Plot score for mutants and tests
+    x = np.arange(1, attacker.m_set.mutants_count + 1, 1)
+    m = [m.score.points for m in attacker.m_set.mutants]
+    x2 = np.arange(1, defender.t_suite.tests_count + 1, 1)
+    t = [t.score.points for t in defender.t_suite.tests]
+
+    fig, ax = plt.subplots()
+    ax.bar(x, m)
+
+    ax.set(xlabel='Mutant', ylabel='Score',
+           title='Final scores for mutants')
+    ax.grid(axis='y')
+
+    fig2, ax = plt.subplots()
+    ax.bar(x2, t)
+    ax.set(xlabel='Test', ylabel='Score',
+           title='Final scores for tests by their test method number')
+    ax.grid(axis='y')
+
+    if save:
+        fig.savefig("Mutants.png")
+        fig2.savefig("Tests.png")
+    if display:
+        plt.show()
+
+
 def main():
     """ Main function to run it all """
 
@@ -153,9 +182,16 @@ def main():
     generate_sets()
 
     # Generate coverage map for filtering before the game starts
-    execute_testing(defender.t_suite.tests_ids)
-    test_mapping = test_map_array()
-    cov_map = cov_map_dic()
+    cm_path = '../generation/covMap-' + TESTS_FOLDER_NAME + '.csv'
+    tm_path = '../generation/testMap-' + TESTS_FOLDER_NAME + '.csv'
+    if path.isfile(cm_path) == 0:
+        execute_testing(defender.t_suite.tests_ids)
+        # Change name, so next time same program runs, it will not be necessary, to run the execution again
+        rename('../generation/covMap.csv', cm_path)
+        rename('../generation/testMap.csv', tm_path)
+
+    test_mapping = test_map_array(tm_path)
+    cov_map = cov_map_dic(cm_path)
 
     # Read the mutant context information and store it in a dictionary for each row
     mc = open('../generation/mutants.context')
@@ -199,28 +235,24 @@ def main():
             # Update results
             update_results()
 
-    # End of Game
+    ''' End of The Game '''
+    # Plot results
+    plot_results(True, True)
+
     mc.close()
     if not RANDOM_SELECTION:
         attacker.vw_mutant.stop()
 
 
 if __name__ == "__main__":
-    # main()
+    main()
 
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    # Data for plotting
-    t = np.arange(0.0, 2.0, 0.01)
-    s = 1 + np.sin(2 * np.pi * t)
-
-    fig, ax = plt.subplots()
-    ax.plot(t, s)
-
-    ax.set(xlabel='time (s)', ylabel='voltage (mV)',
-           title='About as simple as it gets, folks')
-    ax.grid()
-
-    # fig.savefig("test.png")
-    plt.show()
+""" TO DO:
+- Bar chart instead of line chart
+- Line chart (x for round and y for kill ratio)
+- Create a log file for each round per line (wins, losses, scores, kill ratio, how much time to run a round)
+- For mutants and tests make files at the end with information:
+  - For mutants: add how many times was selected, survived and killed, was in the subset 
+  - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset
+- Structure the random selection same way as bandits
+"""

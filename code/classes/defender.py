@@ -16,8 +16,9 @@ class Defender:
         self.won = 0  # Times won against attacker
         self.lost = 0  # Times lost against attacker
         # Create the mutant Vowpal Wabbit model
-        # self.vw_test = VWWrapper('--quiet --cb_explore_adf --epsilon=0.1',
-        #                       '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+        self.vw_test = VWWrapper(
+            '--quiet --cb_explore_adf --epsilon=0.1',
+            '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
 
     @staticmethod
     def generate_tests():
@@ -56,4 +57,5 @@ class Defender:
             self.lose()
 
         self.t_subset.update_killed(killed)
-        self.t_subset.update_tests(ids, kill_ratio)
+        # self.t_subset.update_tests(ids, kill_ratio)
+        self.t_suite.update_tests(ids, kill_ratio)

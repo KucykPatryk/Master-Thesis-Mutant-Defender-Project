@@ -32,6 +32,23 @@ class MutationSet:
         subset = random.sample(self.mutants_list, MUTANTS_SUBSET_SIZE)
         return subset
 
+    def update_mutants(self, ids, kill_ratio, subset_ids):
+        """ Update mutant values
+
+        :param ids: a list with mutant ids that were killed
+        :param kill_ratio: kill ratio
+        :param subset_ids: ids of the last subset
+        :return: nothing
+        """
+        # Updated killed mutants
+        for i in range(len(ids)):
+            self.mutants[int(ids[i]) - 1].update_kills()
+            self.mutants[int(ids[i]) - 1].update_score(-kill_ratio)
+        # Update survived mutants
+        for x in subset_ids:
+            if str(x) not in ids:
+                self.mutants[int(x) - 1].update_score(kill_ratio)
+
 
 class MutationSubset(MutationSet):
     """ Class representing the created subset """
@@ -63,20 +80,3 @@ class MutationSubset(MutationSet):
         """ Update the survived/killed value """
         self.survived = s
         self.killed = k
-
-    def update_mutants(self, ids, kill_ratio):
-        """ Update mutant values
-
-        :param ids: a list with mutant ids that were killed
-        :param kill_ratio: kill ratio
-        :return: nothing
-        """
-        # Updated killed mutants
-        for i in range(len(ids)):
-            self.mutants[int(ids[i])].update_kills()
-            self.mutants[int(ids[i])].update_score(-kill_ratio)
-        # Update survived mutants
-        for x in self.mutants_list:
-            x_id = int(x.split(':')[0])
-            if str(x_id) not in ids:
-                self.mutants[x_id].update_score(kill_ratio)

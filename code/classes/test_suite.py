@@ -32,6 +32,18 @@ class TestSuite:
         subset = random.sample(self.tests_ids, TESTS_SUBSET_SIZE)
         return subset
 
+    def update_tests(self, ids, kill_ratio):
+        """ Update test values
+
+        :param ids: a list with test ids that killed
+        :param kill_ratio: kill ratio
+        :return: nothing
+        """
+        test_map = test_map_array()
+        for i in range(len(ids)):
+            self.tests[int(test_map[int(ids[i])]) - 1].update_kills()
+            self.tests[int(test_map[int(ids[i])]) - 1].update_score(kill_ratio)
+
 
 class TestSubset(TestSuite):
     """ Class representing the created subset """
@@ -42,19 +54,3 @@ class TestSubset(TestSuite):
     def update_killed(self, value):
         """ Update the killed value """
         self.killed = value
-
-    def update_tests(self, ids, kill_ratio):
-        """ Update test values
-
-        :param ids: a list with test ids that killed
-        :param kill_ratio: kill ratio
-        :return: nothing
-        """
-        test_map = test_map_array()
-        for i in range(len(ids)):
-            self.tests[test_map[int(ids[i])]].update_kills()
-            self.tests[test_map[int(ids[i])]].update_score(kill_ratio)
-        # for x in self.tests_ids:
-        #     x_id = int(x[4:])
-        #     if str(x_id) not in ids:
-        #         self.tests[x_id].update_score(kill_ratio)
