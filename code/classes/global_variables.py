@@ -1,11 +1,12 @@
 from os import walk
 import math
 
-GAME_ITERATIONS = 3
+GAME_ITERATIONS = 5
 
-MUTANTS_SUBSET_SIZE = 5
-TESTS_SUBSET_SIZE = 12
-MODEL_PICK_LIMIT = math.ceil(MUTANTS_SUBSET_SIZE * 0.3)
+MUTANTS_SUBSET_SIZE = 10
+TESTS_SUBSET_SIZE = 15
+MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * 0.3)
+MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * 0.3)
 
 TESTS_FOLDER_NAME = next(walk('../generation/evosuite-tests/'))[1][0]
 TESTS_FILE_NAME = next(walk('../generation/evosuite-tests/' + TESTS_FOLDER_NAME))[2][0]

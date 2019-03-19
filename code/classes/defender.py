@@ -67,7 +67,7 @@ class Defender:
         # self.t_subset.update_tests(ids, kill_ratio)
         self.t_suite.update_tests(ids, kill_ratio)
 
-    def prepare_for_testing(self):
+    def prepare_for_testing(self, f_tests_ids):
         """ Prepare agent for the execution """
         if self.agent_mode is 'bandit':
             # Test features
@@ -83,7 +83,7 @@ class Defender:
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
-            self.t_subset = TestSubset(self.t_subset.create_random_subset(MODEL_PICK_LIMIT), MODEL_PICK_LIMIT)
+            self.t_subset = self.new_subset(self.t_subset.create_subset(f_tests_ids, MODEL_PICK_LIMIT_T))
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """

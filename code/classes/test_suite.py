@@ -16,15 +16,18 @@ class TestSuite:
         for t in range(self.tests_count):
             self.tests.append(Test(t + 1, 0))
 
-    def create_subset(self, ids_list):
+    @staticmethod
+    def create_subset(ids_list, size):
         """ Create a subset with given test ids
 
         :param ids_list: ids of the desired tests as a list
+        :param size: size of the subset
         :return: a new subset
         """
         subset = list()
-        for i in range(TESTS_SUBSET_SIZE):
-            subset.append(self.tests_ids[int(ids_list[i])])
+        for i in range(size):
+
+            subset.append(ids_list[i])
         return subset
 
     def create_random_subset(self, size):

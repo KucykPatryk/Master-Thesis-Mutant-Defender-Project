@@ -37,7 +37,7 @@ def execute_testing(testing_set):
     """ Do testing on selected mutants by a set of selected tests """
     test_class = TESTS_FOLDER_NAME + '.' + TESTS_FILE_NAME[:-5]
     test_case = ','.join(['test' + e for e in testing_set])
-    print(test_case)
+    #print(test_case)
 
     run(['./run_tests.sh', test_class, test_case], cwd='../generation/')
 
@@ -90,28 +90,44 @@ def cov_map_dic(file_path='../generation/covMap.csv'):
     return cov_tests
 
 
-def delete_rand_items(items, n):
-    """ Randomly deletes n items from a list """
+def select_rand_items(items, n):
+    """ Randomly returns n items from a list as a list """
     to_delete = set(random.sample(range(len(items)), n))
     return [x for i, x in enumerate(items) if i not in to_delete]
 
 
-def filter_tests(cov_map, test_mapping):
+def filter_tests(cov_map, test_mapping, size):
     """ Filter out tests that do not cover any mutants from the subset"""
+    filtered_t_dic = dict((key, list()) for key in attacker.m_subset.mutants_ids)
     filtered_t_ids = list()
-    for t in cov_map:
-        for m in attacker.m_subset.mutants_ids:
+
+    for m in attacker.m_subset.mutants_ids:
+        for t in cov_map:
             if int(m) in cov_map[t]:
-                filtered_t_ids.append(t)
-                break
+                filtered_t_dic[m].append(t)
+
     # Filtered subset for tests
-    randomized_filtered_t_ids = delete_rand_items(filtered_t_ids, len(filtered_t_ids) - TESTS_SUBSET_SIZE)
+    i = 0
+    while True:
+        for key in filtered_t_dic:
+            choice = random.choice(filtered_t_dic[key])
+            if choice in filtered_t_ids:
+                continue
+            filtered_t_ids.append(choice)
+            i += 1
+            if i == size:
+                break
+        if i == size:
+            break
+
+    # print('dic', filtered_t_dic)
+    # print('list', filtered_t_ids)
 
     # Map test number ids to name ids
-    for i in range(TESTS_SUBSET_SIZE):
-        randomized_filtered_t_ids[i] = test_mapping[randomized_filtered_t_ids[i]]
+    for i in range(size):
+        filtered_t_ids[i] = test_mapping[filtered_t_ids[i]]
 
-    return randomized_filtered_t_ids
+    return filtered_t_ids
 
 
 def plot_results(display, save):
@@ -168,6 +184,8 @@ def main():
     cm_path = '../generation/covMap-' + TESTS_FOLDER_NAME + '.csv'
     tm_path = '../generation/testMap-' + TESTS_FOLDER_NAME + '.csv'
     if path.isfile(cm_path) == 0:
+        with open('../generation/exclude_mutants.txt', 'w') as ef:
+            ef.write('')
         execute_testing(defender.t_suite.tests_ids)
         # Change name, so next time same program runs, it will not be necessary, to run the execution again
         rename('../generation/covMap.csv', cm_path)
@@ -175,10 +193,12 @@ def main():
 
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
+    # print(test_mapping)
+    # print(cov_map)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     with open('game_info_log.csv', 'w') as gl:  # For log round writing
-        log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Round Time']
+        log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Mutants Survived', 'Mutants Killed', 'Round Time']
         log_line_dic = dict((key, '') for key in log_line_header)
         gl_writer = DictWriter(gl, fieldnames=log_line_header)
         gl_writer.writeheader()
@@ -191,11 +211,29 @@ def main():
                 attacker.m_subset = attacker.new_subset(MUTANTS_SUBSET_SIZE)
 
             # Create filtered subset for tests
-            defender.t_subset = defender.new_subset(defender.t_suite.create_subset(filter_tests(cov_map, test_mapping)))
+            f_tests = filter_tests(cov_map, test_mapping, TESTS_SUBSET_SIZE)
+            # print(attacker.m_subset.mutants_ids)
+            defender.t_subset = defender.new_subset(defender.t_suite.create_subset(f_tests, TESTS_SUBSET_SIZE))
 
             # Set up attacker and defender
             attacker.prepare_for_testing()
-            defender.prepare_for_testing()
+            # Again create filtered subset for tests
+            f_tests_sub = list()
+            i = 0
+            while True:
+                for m in attacker.m_subset.mutants_ids:
+                    rnd_t = random.choice(f_tests)
+                    if int(m) in cov_map[test_mapping.index(rnd_t)]:
+                        if rnd_t in f_tests_sub:
+                            continue
+                        f_tests_sub.append(rnd_t)
+                        i += 1
+                        if i == MODEL_PICK_LIMIT_T:
+                            break
+                if i == MODEL_PICK_LIMIT_T:
+                    break
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            defender.prepare_for_testing(f_tests_sub)
 
             # Execute
             execute_testing(defender.t_subset.tests_ids)
@@ -211,13 +249,15 @@ def main():
                     defender.learn()
             time_stop = perf_counter()
             elapsed_time = time_stop - time_start  # In seconds
-            print("Elapsed time: %.3f sec" % elapsed_time)
+            print("Elapsed time for round %d: %.3f sec" % (x, elapsed_time))
 
             # Save to log file
             log_line_dic['Round'] = '%d' % (x + 1)
             log_line_dic['Winner'] = 'Attacker' if attacker.last_winner else 'Defender'
             log_line_dic['Loser'] = 'Attacker' if defender.last_winner else 'Defender'
             log_line_dic['Kill Ratio'] = '%.3f' % kill_ratio_plot[x]
+            log_line_dic['Mutants Survived'] = attacker.m_subset.survived
+            log_line_dic['Mutants Killed'] = attacker.m_subset.killed
             log_line_dic['Round Time'] = '%.3f' % elapsed_time
             gl_writer.writerow(log_line_dic)
 
@@ -231,7 +271,7 @@ if __name__ == "__main__":
 
 """ TO DO:
 
-- Create a log file for each round per line (wins, losses, kill ratio, how much time to run a round)
+
 - For mutants and tests make files at the end with information:
   - For mutants: add how many times was selected, survived and killed, was in the subset 
   - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset
@@ -241,4 +281,5 @@ DONE:
 - Bar chart instead of line chart
 - Structure the random selection same way as bandits
 - Line chart (x for round and y for kill ratio)
+- Create a log file for each round per line (wins, losses, kill ratio, how much time to run a round)
 """

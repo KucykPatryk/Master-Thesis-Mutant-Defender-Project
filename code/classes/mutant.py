@@ -6,9 +6,9 @@ class Mutant:
     def __init__(self, id, score):
         self.id = id
         self.score = Score(score)
-        # self.survived_times = 0  # How many times this mutant survived
+        self.survived_times = 0  # How many times this mutant survived
         self.killed_times = 0  # How many times this mutant was killed
-        # self.survive_last_round = False  # True if survived in last round
+        self.subset_chosen_times = 0  # How many times it was in a subset
 
     def update_kills(self):
         """ Update the kill count """
@@ -21,3 +21,11 @@ class Mutant:
         # self.survived_times += survived
 
         # print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
+
+    def update_survived(self):
+        """ Update survived count """
+        self.survived_times += 1
+
+    def update_subset_chosen(self):
+        """ Update chosen to a subset times count """
+        self.subset_chosen_times += 1

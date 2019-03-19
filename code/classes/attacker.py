@@ -124,7 +124,7 @@ class Attacker:
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
-            self.m_subset = self.new_subset(MODEL_PICK_LIMIT)
+            self.m_subset = self.new_subset(MODEL_PICK_LIMIT_M)
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """

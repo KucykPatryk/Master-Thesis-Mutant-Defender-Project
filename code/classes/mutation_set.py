@@ -17,13 +17,13 @@ class MutationSet:
         for m in range(self.mutants_count):
             self.mutants.append(Mutant(m + 1, 0))
 
-    def create_subset(self, ids_list):
+    def create_subset(self, ids_list, size):
         """ Create a subset with given mutant ids
         :param ids_list: ids of the desired mutants as a list
         :return: a new subset
         """
         subset = list()
-        for i in range(MUTANTS_SUBSET_SIZE):
+        for i in range(size):
             subset.append(self.mutants_list[ids_list[i] - 1])
         return subset
 
@@ -73,7 +73,7 @@ class MutationSubset(MutationSet):
 
     def create_exclude_ids_file(self):
         """ Create a file with only ids of the not in the subset (eg. for the exclude mutants file) """
-        with open('../generation/exclude_mutants.txt', 'w+') as ef:
+        with open('../generation/exclude_mutants.txt', 'w') as ef:
             ef.writelines('%s\n' % l for l in self.excluded_sorted_ids)
 
     def update_survived_killed(self, s, k):
