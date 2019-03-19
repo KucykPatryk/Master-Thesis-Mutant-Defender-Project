@@ -9,16 +9,20 @@ from classes.vwwrapper import VWWrapper
 
 class Defender:
     """ The Defender agent"""
-    def __init__(self):
+    def __init__(self, mode):
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
-        self.t_subset = self.new_subset(self.t_suite.create_random_subset())
+        self.t_subset = self.new_subset(self.t_suite.create_random_subset(TESTS_SUBSET_SIZE))
         self.won = 0  # Times won against attacker
         self.lost = 0  # Times lost against attacker
         # Create the mutant Vowpal Wabbit model
-        self.vw_test = VWWrapper(
-            '--quiet --cb_explore_adf --epsilon=0.1',
-            '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+        # self.vw_test = VWWrapper(
+        #     '--quiet --cb_explore_adf --epsilon=0.1',
+        #     '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+
+        # This variable decides the agent mode. Currently "random" is supported
+        self.agent_mode = mode
+        self.features = ''
 
     @staticmethod
     def generate_tests():
@@ -59,3 +63,24 @@ class Defender:
         self.t_subset.update_killed(killed)
         # self.t_subset.update_tests(ids, kill_ratio)
         self.t_suite.update_tests(ids, kill_ratio)
+
+    def prepare_for_testing(self):
+        """ Prepare agent for the execution """
+        if self.agent_mode is 'bandit':
+            # Test features
+            # self.features =
+            # print(self.features)
+
+            # Prediction
+            # TO BE IMPLEMENTED
+            # Model selects the tests
+            # m_pred =
+            # print(m_pred)
+            return
+
+        elif self.agent_mode is 'random':
+            # Select from the subsets based on MODEL_PICK_LIMIT parameter
+            self.t_subset = TestSubset(self.t_subset.create_random_subset(MODEL_PICK_LIMIT), MODEL_PICK_LIMIT)
+
+    def learn(self):
+        """ Learn after the tests are run through Major and results are updated """

@@ -1,13 +1,11 @@
 from os import walk
 import math
 
-GAME_ITERATIONS = 2
+GAME_ITERATIONS = 5
 
-RANDOM_SELECTION = True  # True for random selection agents, False for bandits
-
-MUTANTS_SUBSET_SIZE = 5
-TESTS_SUBSET_SIZE = 5
-MODEL_PICK_LIMIT = math.ceil(MUTANTS_SUBSET_SIZE * 0.2)
+MUTANTS_SUBSET_SIZE = 15
+TESTS_SUBSET_SIZE = 15
+MODEL_PICK_LIMIT = math.ceil(MUTANTS_SUBSET_SIZE * 0.3)
 
 TESTS_FOLDER_NAME = next(walk('../generation/evosuite-tests/'))[1][0]
 TESTS_FILE_NAME = next(walk('../generation/evosuite-tests/' + TESTS_FOLDER_NAME))[2][0]

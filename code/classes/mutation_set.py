@@ -27,9 +27,9 @@ class MutationSet:
             subset.append(self.mutants_list[ids_list[i] - 1])
         return subset
 
-    def create_random_subset(self):
+    def create_random_subset(self, size):
         """ Same as above, just random with n mutants """
-        subset = random.sample(self.mutants_list, MUTANTS_SUBSET_SIZE)
+        subset = random.sample(self.mutants_list, size)
         return subset
 
     def update_mutants(self, ids, kill_ratio, subset_ids):
@@ -52,19 +52,19 @@ class MutationSet:
 
 class MutationSubset(MutationSet):
     """ Class representing the created subset """
-    def __init__(self, mutants_subset, count):
+    def __init__(self, mutants_subset, count, size):
         super(MutationSubset, self).__init__(mutants_subset, count)
-        self.excluded_sorted_ids = self.excluded_mutant_ids()
+        self.excluded_sorted_ids = self.excluded_mutant_ids(size)
         self.create_exclude_ids_file()
         self.survived = 0  # How many mutants survived
         self.killed = 0  # How many were killed
 
-    def excluded_mutant_ids(self):
+    def excluded_mutant_ids(self, size):
         """ Produce a sorted list of mutant ids not from the subset """
         sorted_ids = list(range(1, self.mutants_count + 1))
         subset_ids = list()
 
-        for i in range(MUTANTS_SUBSET_SIZE):
+        for i in range(size):
             subset_ids.append(int(self.mutants_list[i].split(':')[0]))
 
         sorted_ids = [e for e in sorted_ids if e not in subset_ids]

@@ -27,9 +27,9 @@ class TestSuite:
             subset.append(self.tests_ids[int(ids_list[i])])
         return subset
 
-    def create_random_subset(self):
+    def create_random_subset(self, size):
         """ Same as above, just random """
-        subset = random.sample(self.tests_ids, TESTS_SUBSET_SIZE)
+        subset = random.sample(self.tests_ids, size)
         return subset
 
     def update_tests(self, ids, kill_ratio):

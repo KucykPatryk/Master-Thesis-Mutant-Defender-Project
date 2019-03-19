@@ -1,10 +1,8 @@
 from subprocess import run
 from os import path, rename
 import random
-import csv
 import matplotlib.pyplot as plt
 import numpy as np
-from vowpalwabbit import pyvw
 
 # Import classes
 from classes.attacker import Attacker
@@ -18,8 +16,11 @@ Place program to be played on in /generation/src/'code file'
 """
 
 # Instances of attacker and defender
-attacker = Attacker()
-defender = Defender()
+
+attacker = Attacker('random')
+defender = Defender('random')
+
+kill_ratio_plot = list()
 
 
 def generate_sets():
@@ -47,6 +48,8 @@ def update_results():
         f.readline()
         summary = f.readline().split(',')
         kill_ratio = int(summary[2])/MUTANTS_SUBSET_SIZE  # The ratio of killed mutants by the tests
+
+        kill_ratio_plot.append(kill_ratio)
 
     if kill_ratio > WINNING_THRESHOLD:
         attacker_won = False
@@ -89,43 +92,6 @@ def delete_rand_items(items, n):
     """ Randomly deletes n items from a list """
     to_delete = set(random.sample(range(len(items)), n))
     return [x for i, x in enumerate(items) if i not in to_delete]
-
-
-def produce_mutants_features(ids, mc_dict):
-    """ Produces mutants features string
-    :param ids: mutant ids as list
-    :param mc_dict: dictionary created from mutation.context file
-    :return: dictionary created from mutation.context file
-    """
-    mf = ''
-    for row in mc_dict:
-        if row['mutantNo'] in ids:
-            # mf += row['mutantNo'] + '| '
-            mf += '| '
-            mf += row['mutationOperatorGroup'] + ':1.0 '
-            index = row['mutationOperator'].index(':')
-            if row['mutationOperator'][0] == '<':  # Remove < signs
-                mf += row['mutationOperator'][1:index - 1] + row['mutationOperator'][index + 2:-1] + ':1 '
-            else:
-                mf += row['mutationOperator'][:index] + row['mutationOperator'][index + 1:] + ':1.0 '
-            mf += row['nodeTypeBasic'] + ':1.0 '
-            index = row['parentContextDetailed'].index(':')
-            mf += row['parentContextDetailed'][:index] + row['parentContextDetailed'][index + 1:] + ':1.0 '
-            if ':' in row['parentStmtContextDetailed']:
-                index = row['parentStmtContextDetailed'].index(':')
-                mf += \
-                    row['parentStmtContextDetailed'][:index] + row['parentStmtContextDetailed'][index + 1:] + ':1.0 '
-            else:
-                mf += row['parentStmtContextDetailed'] + ':1 '
-            if row['hasVariableChild'] == '1':
-                mf += 'hasVariableChild' + ':1.0'
-            elif row['hasOperatorChild'] == '1':
-                mf += 'hasOperatorChild' + ':1.0'
-            elif row['hasLiteralChild'] == '1':
-                mf += 'hasLiteralChild' + ':1.0'
-            mf += '\n'
-    mf = mf[:-1]
-    return mf
 
 
 def filter_tests(cov_map, test_mapping):
@@ -173,6 +139,21 @@ def plot_results(display, save):
     if display:
         plt.show()
 
+    # Plot kill ratio for each round
+    x = np.arange(1, len(kill_ratio_plot) + 1, 1)
+    y = kill_ratio_plot
+
+    fig3, ax = plt.subplots()
+    ax.plot(x, y)
+    ax.set(xlabel='Round', ylabel='Kill Ratio',
+           title='Linear visualisation of mutants killed by tests ratio per round')
+    ax.grid()
+
+    if save:
+        fig3.savefig("Kill_ratio.png")
+    if display:
+        plt.show()
+
 
 def main():
     """ Main function to run it all """
@@ -193,66 +174,51 @@ def main():
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
 
-    # Read the mutant context information and store it in a dictionary for each row
-    mc = open('../generation/mutants.context')
-    mc_dict = csv.DictReader(mc)
-
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     for x in range(GAME_ITERATIONS):
         print("ROUND: ", x)
         # Select random subset for mutants
         if x > 0:
-            attacker.m_subset = attacker.new_subset()
+            attacker.m_subset = attacker.new_subset(MUTANTS_SUBSET_SIZE)
 
         # Create filtered subset for tests
         defender.t_subset = defender.new_subset(defender.t_suite.create_subset(filter_tests(cov_map, test_mapping)))
 
-        if not RANDOM_SELECTION:  # Bandit agents
-            ''' Calculate features '''
-            # Mutant features
-            mutants_features = produce_mutants_features(attacker.m_subset.mutants_ids, mc_dict)
-            # print(mutants_features)
+        # Set up attacker and defender
+        attacker.prepare_for_testing()
+        defender.prepare_for_testing()
 
-            # Test features
+        # Execute
+        execute_testing(defender.t_subset.tests_ids)
 
-            # Model selects the tests and mutants
-            m_pred = attacker.vw_mutant.predict(mutants_features)
-            # print(m_pred)
+        # Update results
+        update_results()
 
-            # Execute
-            execute_testing(defender.t_subset.tests_ids)
-
-            # Update results
-            update_results()
-
-            # Model learns
-            if x < GAME_ITERATIONS - 1:
-                attacker.vw_mutant.learn()
-        else:  # Random selection
-            # Execute
-            execute_testing(defender.t_subset.tests_ids)
-
-            # Update results
-            update_results()
+        # Learn the models
+        if x < GAME_ITERATIONS - 1:
+            if attacker.agent_mode is not 'random':
+                attacker.learn()
+            if defender.agent_mode is not 'random':
+                defender.learn()
 
     ''' End of The Game '''
     # Plot results
     plot_results(True, True)
-
-    mc.close()
-    if not RANDOM_SELECTION:
-        attacker.vw_mutant.stop()
 
 
 if __name__ == "__main__":
     main()
 
 """ TO DO:
-- Bar chart instead of line chart
-- Line chart (x for round and y for kill ratio)
+
 - Create a log file for each round per line (wins, losses, scores, kill ratio, how much time to run a round)
 - For mutants and tests make files at the end with information:
   - For mutants: add how many times was selected, survived and killed, was in the subset 
   - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset
+
+
+DONE:
+- Bar chart instead of line chart
 - Structure the random selection same way as bandits
+- Line chart (x for round and y for kill ratio)
 """
