@@ -3,6 +3,8 @@ from os import path, rename
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from time import perf_counter
+from csv import DictWriter
 
 # Import classes
 from classes.attacker import Attacker
@@ -175,31 +177,49 @@ def main():
     cov_map = cov_map_dic(cm_path)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
-    for x in range(GAME_ITERATIONS):
-        print("ROUND: ", x)
-        # Select random subset for mutants
-        if x > 0:
-            attacker.m_subset = attacker.new_subset(MUTANTS_SUBSET_SIZE)
+    with open('game_info_log.csv', 'w') as gl:  # For log round writing
+        log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Round Time']
+        log_line_dic = dict((key, '') for key in log_line_header)
+        gl_writer = DictWriter(gl, fieldnames=log_line_header)
+        gl_writer.writeheader()
 
-        # Create filtered subset for tests
-        defender.t_subset = defender.new_subset(defender.t_suite.create_subset(filter_tests(cov_map, test_mapping)))
+        for x in range(GAME_ITERATIONS):
+            time_start = perf_counter()
+            print("ROUND: ", x)
+            # Select random subset for mutants
+            if x > 0:
+                attacker.m_subset = attacker.new_subset(MUTANTS_SUBSET_SIZE)
 
-        # Set up attacker and defender
-        attacker.prepare_for_testing()
-        defender.prepare_for_testing()
+            # Create filtered subset for tests
+            defender.t_subset = defender.new_subset(defender.t_suite.create_subset(filter_tests(cov_map, test_mapping)))
 
-        # Execute
-        execute_testing(defender.t_subset.tests_ids)
+            # Set up attacker and defender
+            attacker.prepare_for_testing()
+            defender.prepare_for_testing()
 
-        # Update results
-        update_results()
+            # Execute
+            execute_testing(defender.t_subset.tests_ids)
 
-        # Learn the models
-        if x < GAME_ITERATIONS - 1:
-            if attacker.agent_mode is not 'random':
-                attacker.learn()
-            if defender.agent_mode is not 'random':
-                defender.learn()
+            # Update results
+            update_results()
+
+            # Learn the models
+            if x < GAME_ITERATIONS - 1:
+                if attacker.agent_mode is not 'random':
+                    attacker.learn()
+                if defender.agent_mode is not 'random':
+                    defender.learn()
+            time_stop = perf_counter()
+            elapsed_time = time_stop - time_start  # In seconds
+            print("Elapsed time: %.3f sec" % elapsed_time)
+
+            # Save to log file
+            log_line_dic['Round'] = '%d' % (x + 1)
+            log_line_dic['Winner'] = 'Attacker' if attacker.last_winner else 'Defender'
+            log_line_dic['Loser'] = 'Attacker' if defender.last_winner else 'Defender'
+            log_line_dic['Kill Ratio'] = '%.3f' % kill_ratio_plot[x]
+            log_line_dic['Round Time'] = '%.3f' % elapsed_time
+            gl_writer.writerow(log_line_dic)
 
     ''' End of The Game '''
     # Plot results
@@ -211,7 +231,7 @@ if __name__ == "__main__":
 
 """ TO DO:
 
-- Create a log file for each round per line (wins, losses, scores, kill ratio, how much time to run a round)
+- Create a log file for each round per line (wins, losses, kill ratio, how much time to run a round)
 - For mutants and tests make files at the end with information:
   - For mutants: add how many times was selected, survived and killed, was in the subset 
   - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset

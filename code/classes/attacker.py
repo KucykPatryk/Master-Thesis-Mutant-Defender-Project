@@ -17,6 +17,7 @@ class Attacker:
         self.m_subset = self.new_subset(MUTANTS_SUBSET_SIZE)
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
+        self.last_winner = False  # True if won in last round
         # Create the mutant Vowpal Wabbit model
         # self.vw_mutant = VWWrapper(
         #     '--quiet --cb_explore_adf --epsilon=0.1',
@@ -47,10 +48,12 @@ class Attacker:
     def win(self):
         """ Add a win """
         self.won += 1
+        self.last_winner = True
 
     def lose(self):
         """ Add a loss """
         self.lost += 1
+        self.last_winner = False
 
     def update(self, won, summary, ids, kill_ratio):
         """ Update values after a round """
