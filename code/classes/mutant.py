@@ -9,6 +9,7 @@ class Mutant:
         self.survived_times = 0  # How many times this mutant survived
         self.killed_times = 0  # How many times this mutant was killed
         self.subset_chosen_times = 0  # How many times it was in a subset
+        self.selected = 0  # Times selected by an agent
 
     def update_kills(self):
         """ Update the kill count """
@@ -29,3 +30,7 @@ class Mutant:
     def update_subset_chosen(self):
         """ Update chosen to a subset times count """
         self.subset_chosen_times += 1
+
+    def update_selected(self):
+        """ Update selected by agent count """
+        self.selected += 1

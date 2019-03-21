@@ -65,7 +65,7 @@ def update_results():
             tests.append(line[0])
             mutants.append((line[1]))
 
-    attacker.update(attacker_won, summary, mutants, 1 - kill_ratio)
+    attacker.update(attacker_won, summary, mutants, kill_ratio)
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
@@ -173,6 +173,57 @@ def plot_results(display, save):
         plt.show()
 
 
+def update_was_in_subset(subset_ids, agent):
+    """ Update was in subset count """
+    agent.update_wis(subset_ids)
+
+
+def save_log_file(x, elapsed_time, writer, log_line_dic):
+    """ Writes to log file given round info """
+    log_line_dic['Round'] = '%d' % (x + 1)
+    log_line_dic['Winner'] = 'Attacker' if attacker.last_winner else 'Defender'
+    log_line_dic['Loser'] = 'Attacker' if defender.last_winner else 'Defender'
+    log_line_dic['Kill Ratio'] = '%.3f' % kill_ratio_plot[x]
+    log_line_dic['Mutants Survived'] = attacker.m_subset.survived
+    log_line_dic['Mutants Killed'] = attacker.m_subset.killed
+    log_line_dic['Round Time'] = '%.3f' % elapsed_time
+    writer.writerow(log_line_dic)
+
+
+def save_mutants_file():
+    """ Produce mutants file with information about them """
+    with open('mutants_info.csv', 'w') as mi:
+        line_header = ['Mutant Number', 'Score', 'Times Killed', 'Times Survived', 'Times in a Subset',
+                       'Times selected by Agent']
+        line_dic = dict((key, '') for key in line_header)
+        mi_writer = DictWriter(mi, fieldnames=line_header)
+        mi_writer.writeheader()
+        for m in attacker.m_set.mutants:
+            line_dic['Mutant Number'] = m.id
+            line_dic['Score'] = '%.3f' % m.score.points
+            line_dic['Times Killed'] = m.killed_times
+            line_dic['Times Survived'] = m.survived_times
+            line_dic['Times in a Subset'] = m.subset_chosen_times
+            line_dic['Times selected by Agent'] = m.selected
+            mi_writer.writerow(line_dic)
+
+
+def save_tests_file():
+    """ Produce tests file with information about them """
+    with open('tests_info.csv', 'w') as ti:
+        line_header = ['Test Name', 'Score', 'Times Killed', 'Times in a Subset', 'Times selected by Agent']
+        line_dic = dict((key, '') for key in line_header)
+        ti_writer = DictWriter(ti, fieldnames=line_header)
+        ti_writer.writeheader()
+        for t in defender.t_suite.tests:
+            line_dic['Test Name'] = 'test' + str((t.id - 1))
+            line_dic['Score'] = '%.3f' % t.score.points
+            line_dic['Times Killed'] = t.killed_times
+            line_dic['Times in a Subset'] = t.subset_chosen_times
+            line_dic['Times selected by Agent'] = t.selected
+            ti_writer.writerow(line_dic)
+
+
 def main():
     """ Main function to run it all """
 
@@ -208,12 +259,16 @@ def main():
             print("ROUND: ", x)
             # Select random subset for mutants
             if x > 0:
-                attacker.m_subset = attacker.new_subset(MUTANTS_SUBSET_SIZE)
+                attacker.m_subset = attacker.new_subset(attacker.m_set, MUTANTS_SUBSET_SIZE)
+                update_was_in_subset(attacker.m_subset.mutants_ids, attacker)
+            else:
+                update_was_in_subset(attacker.m_subset.mutants_ids, attacker)
 
             # Create filtered subset for tests
             f_tests = filter_tests(cov_map, test_mapping, TESTS_SUBSET_SIZE)
             # print(attacker.m_subset.mutants_ids)
             defender.t_subset = defender.new_subset(defender.t_suite.create_subset(f_tests, TESTS_SUBSET_SIZE))
+            update_was_in_subset(defender.t_subset.tests_ids, defender)
 
             # Set up attacker and defender
             attacker.prepare_for_testing()
@@ -239,7 +294,6 @@ def main():
 
             # Update results
             update_results()
-
             # Learn the models
             if x < GAME_ITERATIONS - 1:
                 if attacker.agent_mode is not 'random':
@@ -251,18 +305,15 @@ def main():
             print("Elapsed time for round %d: %.3f sec" % (x, elapsed_time))
 
             # Save to log file
-            log_line_dic['Round'] = '%d' % (x + 1)
-            log_line_dic['Winner'] = 'Attacker' if attacker.last_winner else 'Defender'
-            log_line_dic['Loser'] = 'Attacker' if defender.last_winner else 'Defender'
-            log_line_dic['Kill Ratio'] = '%.3f' % kill_ratio_plot[x]
-            log_line_dic['Mutants Survived'] = attacker.m_subset.survived
-            log_line_dic['Mutants Killed'] = attacker.m_subset.killed
-            log_line_dic['Round Time'] = '%.3f' % elapsed_time
-            gl_writer.writerow(log_line_dic)
+            save_log_file(x, elapsed_time, gl_writer, log_line_dic)
 
     ''' End of The Game '''
     # Plot results
-    plot_results(True, True)
+    plot_results(False, True)
+
+    # Produce mutants and tests files with information about them
+    save_mutants_file()
+    save_tests_file()
 
 
 if __name__ == "__main__":
@@ -272,8 +323,8 @@ if __name__ == "__main__":
 
 
 - For mutants and tests make files at the end with information:
-  - For mutants: add how many times was selected, survived and killed, was in the subset 
-  - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset
+  - For mutants: add how many times was selected, survived and killed, was in the subset , score
+  - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset, score
 
 
 DONE:

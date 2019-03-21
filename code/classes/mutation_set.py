@@ -43,11 +43,18 @@ class MutationSet:
         # Updated killed mutants
         for i in range(len(ids)):
             self.mutants[int(ids[i]) - 1].update_kills()
-            self.mutants[int(ids[i]) - 1].update_score(-kill_ratio)
+            self.mutants[int(ids[i]) - 1].update_score(-(1 + kill_ratio))
         # Update survived mutants
         for x in subset_ids:
+            self.mutants[int(x) - 1].update_selected()
             if str(x) not in ids:
-                self.mutants[int(x) - 1].update_score(kill_ratio)
+                self.mutants[int(x) - 1].update_score(1 + kill_ratio)
+                self.mutants[int(x) - 1].update_survived()
+
+    def update_wis(self, subset_ids):
+        """ Update was in subset count """
+        for x in subset_ids:
+            self.mutants[int(x) - 1].update_subset_chosen()
 
 
 class MutationSubset(MutationSet):

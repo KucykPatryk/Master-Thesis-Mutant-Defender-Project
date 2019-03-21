@@ -14,7 +14,7 @@ class Attacker:
     def __init__(self, mode):
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
-        self.m_subset = self.new_subset(MUTANTS_SUBSET_SIZE)
+        self.m_subset = self.new_subset(self.m_set, MUTANTS_SUBSET_SIZE)
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
         self.last_winner = False  # True if won in last round
@@ -40,8 +40,8 @@ class Attacker:
 
         return mutants_list
 
-    def new_subset(self, size):
-        m_subset = MutationSubset(self.m_set.create_random_subset(size),
+    def new_subset(self, set, size):
+        m_subset = MutationSubset(set.create_random_subset(size),
                                   len(self.mutants_list), size)
         return m_subset
 
@@ -64,6 +64,10 @@ class Attacker:
 
         self.m_subset.update_survived_killed(summary[3], summary[2])
         self.m_set.update_mutants(ids, kill_ratio, self.m_subset.mutants_ids)
+
+    def update_wis(self, subset_ids):
+        """ Update was in subset count """
+        self.m_set.update_wis(subset_ids)
 
     @staticmethod
     def produce_mutants_features(ids, mc_dict):
@@ -124,7 +128,7 @@ class Attacker:
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
-            self.m_subset = self.new_subset(MODEL_PICK_LIMIT_M)
+            self.m_subset = self.new_subset(self.m_subset, MODEL_PICK_LIMIT_M)
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """

@@ -67,6 +67,10 @@ class Defender:
         # self.t_subset.update_tests(ids, kill_ratio)
         self.t_suite.update_tests(ids, kill_ratio)
 
+    def update_wis(self, subset_ids):
+        """ Update was in subset count """
+        self.t_suite.update_wis(subset_ids)
+
     def prepare_for_testing(self, f_tests_ids):
         """ Prepare agent for the execution """
         if self.agent_mode is 'bandit':

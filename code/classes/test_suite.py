@@ -46,6 +46,12 @@ class TestSuite:
         for i in range(len(ids)):
             self.tests[int(test_map[int(ids[i])]) - 1].update_kills()
             self.tests[int(test_map[int(ids[i])]) - 1].update_score(kill_ratio)
+            self.tests[int(test_map[int(ids[i])]) - 1].update_selected()
+
+    def update_wis(self, subset_ids):
+        """ Update was in subset count """
+        for x in subset_ids:
+            self.tests[int(x) - 1].update_subset_chosen()
 
 
 class TestSubset(TestSuite):
