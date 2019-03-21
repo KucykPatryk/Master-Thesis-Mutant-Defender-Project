@@ -49,7 +49,7 @@ def update_results():
     with open('../generation/summary.csv') as f:
         f.readline()
         summary = f.readline().split(',')
-        kill_ratio = int(summary[2])/MUTANTS_SUBSET_SIZE  # The ratio of killed mutants by the tests
+        kill_ratio = int(summary[2])/MODEL_PICK_LIMIT_M  # The ratio of killed mutants by the tests
 
         kill_ratio_plot.append(kill_ratio)
 
@@ -217,7 +217,7 @@ def main():
 
             # Set up attacker and defender
             attacker.prepare_for_testing()
-            # Again create filtered subset for tests
+            # Again create filtered subset for tests based on newest subset of mutants
             f_tests_sub = list()
             i = 0
             while True:
@@ -232,7 +232,6 @@ def main():
                             break
                 if i == MODEL_PICK_LIMIT_T:
                     break
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             defender.prepare_for_testing(f_tests_sub)
 
             # Execute
