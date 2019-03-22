@@ -3,19 +3,20 @@ from subprocess import run
 from .test_suite import TestSuite
 from .test_suite import TestSubset
 
-from .global_variables import *
+from .global_variables import TESTS_FOLDER_NAME, TESTS_FILE_NAME
 from classes.vwwrapper import VWWrapper
 
 
 class Defender:
     """ The Defender agent"""
-    def __init__(self, mode):
+    def __init__(self, mode, pick_limit, subset_size):
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
-        self.t_subset = self.new_subset(self.t_suite.create_random_subset(TESTS_SUBSET_SIZE))
+        self.t_subset = self.new_subset(self.t_suite.create_random_subset(subset_size))
         self.won = 0  # Times won against attacker
         self.lost = 0  # Times lost against attacker
         self.last_winner = False  # True if won in last round
+        self.pick_limit = pick_limit
         # Create the mutant Vowpal Wabbit model
         # self.vw_test = VWWrapper(
         #     '--quiet --cb_explore_adf --epsilon=0.1',
@@ -87,7 +88,7 @@ class Defender:
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
-            self.t_subset = self.new_subset(self.t_subset.create_subset(f_tests_ids, MODEL_PICK_LIMIT_T))
+            self.t_subset = self.new_subset(self.t_subset.create_subset(f_tests_ids, self.pick_limit))
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """

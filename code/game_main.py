@@ -1,3 +1,4 @@
+import argparse
 from subprocess import run
 from os import path, rename
 import random
@@ -19,8 +20,8 @@ Place program to be played on in /generation/src/'code file'
 
 # Instances of attacker and defender
 
-attacker = Attacker('random')
-defender = Defender('random')
+attacker = Attacker('random', MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+defender = Defender('random', MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
 
 kill_ratio_plot = list()
 
@@ -317,6 +318,22 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--iterations', type=int, default=GAME_ITERATIONS)
+    parser.add_argument('--mutants_subset_size', type=int, default=MUTANTS_SUBSET_SIZE)
+    parser.add_argument('--tests_subset_size', type=int, default=TESTS_SUBSET_SIZE)
+    parser.add_argument('--mutants_pick_limit', type=int, default=MODEL_PICK_LIMIT_M)
+    parser.add_argument('--tests_pick_limit', type=int, default=MODEL_PICK_LIMIT_T)
+    parser.add_argument('--winning_threshold', type=float, default=WINNING_THRESHOLD)
+    args = parser.parse_args()
+
+    GAME_ITERATIONS = args.iterations
+    MUTANTS_SUBSET_SIZE = args.mutants_subset_size
+    TESTS_SUBSET_SIZE = args.tests_subset_size
+    MODEL_PICK_LIMIT_M = args.mutants_pick_limit
+    MODEL_PICK_LIMIT_T = args.tests_pick_limit
+    WINNING_THRESHOLD = args.winning_threshold
+
     main()
 
 """ TO DO:

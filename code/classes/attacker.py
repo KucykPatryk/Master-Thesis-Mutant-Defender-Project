@@ -5,19 +5,19 @@ from .mutation_set import MutationSubset
 
 from csv import DictReader
 
-from .global_variables import *
 from classes.vwwrapper import VWWrapper
 
 
 class Attacker:
     """ The Attacker agent"""
-    def __init__(self, mode):
+    def __init__(self, mode, pick_limit, subset_size):
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
-        self.m_subset = self.new_subset(self.m_set, MUTANTS_SUBSET_SIZE)
+        self.m_subset = self.new_subset(self.m_set, subset_size)
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
         self.last_winner = False  # True if won in last round
+        self.pick_limit = pick_limit
         # Create the mutant Vowpal Wabbit model
         # self.vw_mutant = VWWrapper(
         #     '--quiet --cb_explore_adf --epsilon=0.1',
@@ -128,7 +128,7 @@ class Attacker:
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
-            self.m_subset = self.new_subset(self.m_subset, MODEL_PICK_LIMIT_M)
+            self.m_subset = self.new_subset(self.m_subset, self.pick_limit)
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """
