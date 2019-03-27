@@ -3,7 +3,7 @@ from subprocess import run
 from .test_suite import TestSuite
 from .test_suite import TestSubset
 
-from .global_variables import TESTS_FOLDER_NAME, TESTS_FILE_NAME
+from .global_variables import *
 from classes.vwwrapper import VWWrapper
 
 
@@ -29,7 +29,7 @@ class Defender:
     @staticmethod
     def generate_tests():
         """ Generate mutants with context and log files """
-        run(['./' + 'run_tests_generation.sh'], cwd='../generation/')
+        run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME], cwd='../generation/')
 
     @staticmethod
     def read_test_ids():

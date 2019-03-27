@@ -1,4 +1,4 @@
-<project name="Triangle" default="compile" basedir=".">
+<project name="Triangle" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
     <!-- ##############################################
           Path to Major and Mutation options
@@ -172,5 +172,56 @@
 	       </classpath>
 	       <test name="${testclass}" methods="${testcase}"/>
         </junit>
+    </target>
+
+    <!-- Target to create JaCoCo task coverage info -->
+    
+    <target name="testCoverage" depends="compile.tests" description="Run all unit test cases">
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        	<classpath path="libs/jacoco-0.8.3/lib/jacocoant.jar"/>
+    	</taskdef>
+	<property name="testclass" value="triangle.Triangle_ESTest"/>
+	<property name="testcases" value=""/>
+	<echo message="Running unit tests ..."/>
+	<jacoco:coverage>
+		<junit printsummary="true"
+		       showoutput="true"
+		       haltonfailure="false"
+		       fork="true"
+		       forkmode="once">
+		    <formatter type="plain" usefile="false"/>
+		       <classpath>
+			       <pathelement path="${junit.jar}"/>
+			       <pathelement path="${evosuite-rt}"/>
+			       <pathelement path="bin-tests"/>
+			       <pathelement path="bin"/>
+		       </classpath>
+		    <test name="${testclass}" methods="${testcase}"/>
+		</junit>
+    	</jacoco:coverage>
+    </target>
+
+    <!-- Target to create coverage info -->
+    <target name="testCoverageReport" description="Run JaCoCo for test coverage">
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        	<classpath path="libs/jacoco-0.8.3/lib/jacocoant.jar"/>
+    	</taskdef>
+	<property name="nr" value=""/>
+	<jacoco:report>                       
+		<executiondata>
+		    <file file="jacoco.exec"/>
+		</executiondata>
+		                    
+		<structure name="Example Project">
+		    <classfiles>
+		        <fileset dir="bin-tests"/>
+		    </classfiles>
+		    <sourcefiles encoding="UTF-8">
+		        <fileset dir="src"/>
+		    </sourcefiles>
+		</structure>                           
+		<csv destfile="coverage_reports/coverage_report${nr}"/>                    
+    	</jacoco:report>
+        
     </target>
 </project>

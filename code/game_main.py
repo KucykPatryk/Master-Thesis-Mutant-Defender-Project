@@ -1,11 +1,12 @@
 import argparse
 from subprocess import run
-from os import path, rename
+from os import path, rename, makedirs
 import random
 import matplotlib.pyplot as plt
 import numpy as np
 from time import perf_counter
 from csv import DictWriter
+import sys
 
 # Import classes
 from classes.attacker import Attacker
@@ -20,10 +21,25 @@ Place program to be played on in /generation/src/'code file'
 
 # Instances of attacker and defender
 
-attacker = Attacker('random', MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
-defender = Defender('random', MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
+attacker = object()
+defender = object()
 
 kill_ratio_plot = list()
+
+
+def change_separate_class_loader(param):
+    """ Change the parameter separateClassLoader to true or false"""
+    file = '../generation/evosuite-tests/' + TESTS_FOLDER_NAME + '/' + TESTS_FILE_NAME
+    with open(file, 'r') as etc:
+        data = etc.readlines()
+        for index, line in enumerate(data):
+            if line.startswith('@RunWith'):
+                old_string = line
+                new_string = old_string[:155] + param + old_string[-18:]
+                data[index] = new_string
+                break
+    with open(file, 'w') as etc:
+        etc.writelines(data)
 
 
 def generate_sets():
@@ -34,13 +50,15 @@ def generate_sets():
         defender.generate_tests()
 
 
-def execute_testing(testing_set):
+def execute_testing(testing_set, file='./run_tests.sh', cov_parm=''):
     """ Do testing on selected mutants by a set of selected tests """
     test_class = TESTS_FOLDER_NAME + '.' + TESTS_FILE_NAME[:-5]
     test_case = ','.join(['test' + e for e in testing_set])
-    #print(test_case)
 
-    run(['./run_tests.sh', test_class, test_case], cwd='../generation/')
+    if file == './run_test_coverage.sh':
+        run([file, test_class, test_case, cov_parm], cwd='../generation/')
+    else:
+        run([file, test_class, test_case], cwd='../generation/')
 
 
 def update_results():
@@ -109,12 +127,21 @@ def filter_tests(cov_map, test_mapping, size):
 
     # Filtered subset for tests
     i = 0
+    # empty = 0
     while True:
+        # if len(filtered_t_dic) == empty:
+        #     sys.exit('ERROR: Cannot find enough matches! Test subset is too big or mutant subset is too small!')
+        # empty = 0
         for key in filtered_t_dic:
+            # if not filtered_t_dic[key]:
+            #     empty += 1
+            #     continue
             choice = random.choice(filtered_t_dic[key])
-            if choice in filtered_t_ids:
-                continue
+            # if choice in filtered_t_ids:
+            #     filtered_t_dic[key].remove(choice)
+            #     continue
             filtered_t_ids.append(choice)
+            # filtered_t_dic[key].remove(choice)
             i += 1
             if i == size:
                 break
@@ -153,8 +180,8 @@ def plot_results(display, save):
     ax.grid(axis='y')
 
     if save:
-        fig.savefig("Mutants.png")
-        fig2.savefig("Tests.png")
+        fig.savefig('output/' + OUTPUT_RUN_DIR + '/Mutants.png')
+        fig2.savefig('output/' + OUTPUT_RUN_DIR + '/Tests.png')
     if display:
         plt.show()
 
@@ -169,7 +196,7 @@ def plot_results(display, save):
     ax.grid()
 
     if save:
-        fig3.savefig("Kill_ratio.png")
+        fig3.savefig('output/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
     if display:
         plt.show()
 
@@ -193,7 +220,7 @@ def save_log_file(x, elapsed_time, writer, log_line_dic):
 
 def save_mutants_file():
     """ Produce mutants file with information about them """
-    with open('mutants_info.csv', 'w') as mi:
+    with open('output/' + OUTPUT_RUN_DIR + '/mutants_info.csv', 'w') as mi:
         line_header = ['Mutant Number', 'Score', 'Times Killed', 'Times Survived', 'Times in a Subset',
                        'Times selected by Agent']
         line_dic = dict((key, '') for key in line_header)
@@ -211,7 +238,7 @@ def save_mutants_file():
 
 def save_tests_file():
     """ Produce tests file with information about them """
-    with open('tests_info.csv', 'w') as ti:
+    with open('output/' + OUTPUT_RUN_DIR + '/tests_info.csv', 'w') as ti:
         line_header = ['Test Name', 'Score', 'Times Killed', 'Times in a Subset', 'Times selected by Agent']
         line_dic = dict((key, '') for key in line_header)
         ti_writer = DictWriter(ti, fieldnames=line_header)
@@ -225,6 +252,11 @@ def save_tests_file():
             ti_writer.writerow(line_dic)
 
 
+def run_tests_coverage():
+    for nr in defender.tests_ids:
+        execute_testing([nr], './run_test_coverage.sh', nr)
+
+
 def main():
     """ Main function to run it all """
 
@@ -232,6 +264,22 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
+    # Make run coverage with JaCoCo possible
+    change_separate_class_loader('false')
+    run(['./compile_tests.sh'], cwd='../generation/')
+    if not path.exists('../generation/coverage_reports'):
+        makedirs('../generation/coverage_reports')
+        run_tests_coverage()
+
+    # Change back, so testing with major is possible
+    change_separate_class_loader('true')
+    run(['./compile_tests.sh'], cwd='../generation/')
+
+    # Create output directory if it does not exist
+    if not path.exists('output'):
+        makedirs('output')
+    if not path.exists('output/' + OUTPUT_RUN_DIR):
+        makedirs('output/' + OUTPUT_RUN_DIR)
     # Generate coverage map for filtering before the game starts
     cm_path = '../generation/covMap-' + TESTS_FOLDER_NAME + '.csv'
     tm_path = '../generation/testMap-' + TESTS_FOLDER_NAME + '.csv'
@@ -249,7 +297,7 @@ def main():
     # print(cov_map)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
-    with open('game_info_log.csv', 'w') as gl:  # For log round writing
+    with open('output/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
         log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Mutants Survived', 'Mutants Killed', 'Round Time']
         log_line_dic = dict((key, '') for key in log_line_header)
         gl_writer = DictWriter(gl, fieldnames=log_line_header)
@@ -280,8 +328,8 @@ def main():
                 for m in attacker.m_subset.mutants_ids:
                     rnd_t = random.choice(f_tests)
                     if int(m) in cov_map[test_mapping.index(rnd_t)]:
-                        if rnd_t in f_tests_sub:
-                            continue
+                        # if rnd_t in f_tests_sub:
+                        #     continue
                         f_tests_sub.append(rnd_t)
                         i += 1
                         if i == MODEL_PICK_LIMIT_T:
@@ -310,7 +358,7 @@ def main():
 
     ''' End of The Game '''
     # Plot results
-    plot_results(False, True)
+    plot_results(SHOW_PLOTS, True)
 
     # Produce mutants and tests files with information about them
     save_mutants_file()
@@ -322,31 +370,29 @@ if __name__ == "__main__":
     parser.add_argument('--iterations', type=int, default=GAME_ITERATIONS)
     parser.add_argument('--mutants_subset_size', type=int, default=MUTANTS_SUBSET_SIZE)
     parser.add_argument('--tests_subset_size', type=int, default=TESTS_SUBSET_SIZE)
-    parser.add_argument('--mutants_pick_limit', type=int, default=MODEL_PICK_LIMIT_M)
-    parser.add_argument('--tests_pick_limit', type=int, default=MODEL_PICK_LIMIT_T)
+    parser.add_argument('--model_pick_limit_multiplier', type=float, default=MODEL_PICK_LIMIT_MULTIPLIER)
     parser.add_argument('--winning_threshold', type=float, default=WINNING_THRESHOLD)
+    parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
     args = parser.parse_args()
 
     GAME_ITERATIONS = args.iterations
     MUTANTS_SUBSET_SIZE = args.mutants_subset_size
     TESTS_SUBSET_SIZE = args.tests_subset_size
-    MODEL_PICK_LIMIT_M = args.mutants_pick_limit
-    MODEL_PICK_LIMIT_T = args.tests_pick_limit
+    MODEL_PICK_LIMIT_MULTIPLIER = args.model_pick_limit_multiplier
     WINNING_THRESHOLD = args.winning_threshold
+    OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.1f_wt:%.1f' \
+        % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD)
 
-    main()
+    MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
+    MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
+
+    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+    defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
+
+    attacker.prepare_for_testing()
+
+    # main()
 
 """ TO DO:
-
-
-- For mutants and tests make files at the end with information:
-  - For mutants: add how many times was selected, survived and killed, was in the subset , score
-  - For tests: how many it killed in total and at least one time, how often it was selected, was in the subset, score
-
-
-DONE:
-- Bar chart instead of line chart
-- Structure the random selection same way as bandits
-- Line chart (x for round and y for kill ratio)
-- Create a log file for each round per line (wins, losses, kill ratio, how much time to run a round)
+- For each round calculate code coverage for subset and selected tests
 """

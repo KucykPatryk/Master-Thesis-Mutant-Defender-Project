@@ -1,17 +1,28 @@
 from os import walk
 import math
 
-GAME_ITERATIONS = 5
+
+GAME_ITERATIONS = 1
 
 MUTANTS_SUBSET_SIZE = 15
 TESTS_SUBSET_SIZE = 15
-MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * 0.3)
-MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * 0.3)
+MODEL_PICK_LIMIT_MULTIPLIER = 0.3
+MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
+MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
+WINNING_THRESHOLD = 0.5  # Percentage for winning by killing mutants
+OUTPUT_RUN_DIR = 'run0'
+ATTACKER_MODE = 'bandit'
+DEFENDER_MODE = 'random'
+
+SHOW_PLOTS = False
 
 TESTS_FOLDER_NAME = next(walk('../generation/evosuite-tests/'))[1][0]
 TESTS_FILE_NAME = next(walk('../generation/evosuite-tests/' + TESTS_FOLDER_NAME))[2][0]
 
-WINNING_THRESHOLD = 0.5  # Percentage for winning by killing mutants
+SRC_FILE_NAME = TESTS_FOLDER_NAME.capitalize()  # Name without he extension
+SRC_FOLDER_NAME = TESTS_FOLDER_NAME
+
+
 
 # with open('../generation/summary.csv') as f:
 #     f.readline()
