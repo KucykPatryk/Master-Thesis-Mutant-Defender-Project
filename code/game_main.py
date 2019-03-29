@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import perf_counter
 from csv import DictWriter
-import sys
+import pandas as pd
+from sklearn import preprocessing
 
 # Import classes
 from classes.attacker import Attacker
@@ -264,22 +265,27 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
+    attacker.encoder = attacker.encode_features()
+    # print(attacker.encoder.transform([['STD', '<RETURN>:<NO-OP>', 'null', 'IF:THENPART',
+    #                           'IF:THENPART', '0', '1', '0']]).toarray())
+
     # Make run coverage with JaCoCo possible
-    change_separate_class_loader('false')
-    run(['./compile_tests.sh'], cwd='../generation/')
     if not path.exists('../generation/coverage_reports'):
+        change_separate_class_loader('false')
+        run(['./compile_tests.sh'], cwd='../generation/')
         makedirs('../generation/coverage_reports')
         run_tests_coverage()
 
-    # Change back, so testing with major is possible
-    change_separate_class_loader('true')
-    run(['./compile_tests.sh'], cwd='../generation/')
+        # Change back, so testing with major is possible
+        change_separate_class_loader('true')
+        run(['./compile_tests.sh'], cwd='../generation/')
 
     # Create output directory if it does not exist
     if not path.exists('output'):
         makedirs('output')
     if not path.exists('output/' + OUTPUT_RUN_DIR):
         makedirs('output/' + OUTPUT_RUN_DIR)
+
     # Generate coverage map for filtering before the game starts
     cm_path = '../generation/covMap-' + TESTS_FOLDER_NAME + '.csv'
     tm_path = '../generation/testMap-' + TESTS_FOLDER_NAME + '.csv'
@@ -389,9 +395,9 @@ if __name__ == "__main__":
     attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
 
-    attacker.prepare_for_testing()
+    main()
+    # attacker.prepare_for_testing()
 
-    # main()
 
 """ TO DO:
 - For each round calculate code coverage for subset and selected tests

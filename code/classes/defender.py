@@ -18,9 +18,7 @@ class Defender:
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
         # Create the mutant Vowpal Wabbit model
-        # self.vw_test = VWWrapper(
-        #     '--quiet --cb_explore_adf --epsilon=0.1',
-        #     '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode

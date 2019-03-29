@@ -4,6 +4,9 @@ from .mutation_set import MutationSet
 from .mutation_set import MutationSubset
 
 from csv import DictReader
+import pandas as pd
+from sklearn import preprocessing
+import sys
 
 from classes.vwwrapper import VWWrapper
 
@@ -18,10 +21,7 @@ class Attacker:
         self.lost = 0  # Times lost against defender
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
-        # Create the mutant Vowpal Wabbit model
-        # self.vw_mutant = VWWrapper(
-        #     '--quiet --cb_explore_adf --epsilon=0.1',
-        #     '/home/kucyk-p/UiO/Master_Thesis/vowpal_wabbit/build/vowpalwabbit/vw')
+        self.encoder = object()
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
@@ -70,52 +70,32 @@ class Attacker:
         self.m_set.update_wis(subset_ids)
 
     @staticmethod
-    def produce_mutants_features(ids, mc_dict):
-        """ Produces mutants features string
-        :param ids: mutant ids as list
-        :param mc_dict: dictionary created from mutation.context file
-        :return: dictionary created from mutation.context file
-        """
-        mf = ''
-        for row in mc_dict:
-            if row['mutantNo'] in ids:
-                # mf += row['mutantNo'] + '| '
-                mf += '| '
-                mf += row['mutationOperatorGroup'] + ':1.0 '
-                index = row['mutationOperator'].index(':')
-                if row['mutationOperator'][0] == '<':  # Remove < signs
-                    mf += row['mutationOperator'][1:index - 1] + row['mutationOperator'][index + 2:-1] + ':1 '
-                else:
-                    mf += row['mutationOperator'][:index] + row['mutationOperator'][index + 1:] + ':1.0 '
-                mf += row['nodeTypeBasic'] + ':1.0 '
-                index = row['parentContextDetailed'].index(':')
-                mf += row['parentContextDetailed'][:index] + row['parentContextDetailed'][index + 1:] + ':1.0 '
-                if ':' in row['parentStmtContextDetailed']:
-                    index = row['parentStmtContextDetailed'].index(':')
-                    mf += \
-                        row['parentStmtContextDetailed'][:index] + row['parentStmtContextDetailed'][
-                                                                   index + 1:] + ':1.0 '
-                else:
-                    mf += row['parentStmtContextDetailed'] + ':1 '
-                if row['hasVariableChild'] == '1':
-                    mf += 'hasVariableChild' + ':1.0'
-                elif row['hasOperatorChild'] == '1':
-                    mf += 'hasOperatorChild' + ':1.0'
-                elif row['hasLiteralChild'] == '1':
-                    mf += 'hasLiteralChild' + ':1.0'
-                mf += '\n'
-        mf = mf[:-1]
-        return mf
+    def encode_features():
+        """ Encode mutant features with HotOneEncoder from mutant.context file """
+        df = pd.read_csv('../generation/mutants.context', sep=',', dtype='category')
+        cat1 = df.mutationOperatorGroup.unique()
+        cat2 = df.mutationOperator.unique()
+        cat3 = df.nodeTypeBasic.unique()
+        cat4 = df.parentContextDetailed.unique()
+        cat5 = df.parentStmtContextDetailed.unique()
+        cat6 = df.hasVariableChild.unique()
+        cat7 = df.hasOperatorChild.unique()
+        cat8 = df.hasLiteralChild.unique()
+
+        enc = preprocessing.OneHotEncoder(handle_unknown='ignore',
+                                          categories=[cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8])
+
+        x = [[cat1[0], cat2[0], cat3[0], cat4[0], cat5[0], cat6[0], cat7[0], cat8[0]],
+             [cat1[-1], cat2[-1], cat3[-1], cat4[-1], cat5[-1], cat6[-1], cat7[-1], cat8[-1]]]
+
+        print(enc.fit(x))
+        return enc
 
     def prepare_for_testing(self):
         """ Prepare agent for the execution """
-        if self.agent_mode is 'bandit':
-            # Read the mutant context information and store it in a dictionary for each row
-            mc = open('../generation/mutants.context')
-            mc_dict = DictReader(mc)
-
+        if self.agent_mode is 'scikit':
             # Mutant features
-            self.features = self.produce_mutants_features(self.m_subset.mutants_ids, mc_dict)
+            # self.features = self.encoder.transform([[]].toarray())
             # print(self.features)
 
             # Prediction
@@ -123,8 +103,6 @@ class Attacker:
             # Model selects the mutants
             # m_pred = attacker.vw_mutant.predict(mutants_features)
             # print(m_pred)
-
-            mc.close()
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
