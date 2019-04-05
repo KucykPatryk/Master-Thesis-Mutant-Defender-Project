@@ -324,31 +324,41 @@ def main():
 
             # Set up attacker and defender
             attacker.prepare_for_testing()
-            return
 
-            # Again create filtered subset for tests based on newest subset of mutants
-            f_tests_sub = list()
-            i = 0
-            while True:
-                for m in attacker.m_subset.mutants_ids:
-                    rnd_t = random.choice(f_tests)
-                    if int(m) in cov_map[test_mapping.index(rnd_t)]:
-                        # if rnd_t in f_tests_sub:
-                        #     continue
-                        f_tests_sub.append(rnd_t)
-                        i += 1
-                        if i == MODEL_PICK_LIMIT_T:
-                            break
-                if i == MODEL_PICK_LIMIT_T:
-                    break
+            # # Again create filtered subset for tests based on newest subset of mutants
+            # f_tests_sub = list()
+            # i = 0
+            # while True:
+            #     for m in attacker.m_subset.mutants_ids:
+            #         rnd_t = random.choice(f_tests)
+            #         if int(m) in cov_map[test_mapping.index(rnd_t)]:
+            #             f_tests_sub.append(rnd_t)
+            #             i += 1
+            #             if i == MODEL_PICK_LIMIT_T:
+            #                 break
+            #     if i == MODEL_PICK_LIMIT_T:
+            #         break
 
-            defender.prepare_for_testing(f_tests_sub)
+            # Find all tests covering mutants and create subsets for random and pick selection
+            f_tests_cov = list()
+            for m in attacker.m_subset.mutants_ids:
+                for t in f_tests:
+                    if int(m) in cov_map[test_mapping.index(t)] and t not in f_tests_cov:
+                        f_tests_cov.append(t)
+            while len(f_tests_cov) < MODEL_PICK_LIMIT_T:
+                f_tests_cov.append(random.choice(f_tests_cov))
+            f_tests_sub = f_tests_cov.copy()
+            while len(f_tests_sub) > MODEL_PICK_LIMIT_T:
+                f_tests_sub.remove(np.random.choice(f_tests_sub))
+
+            defender.prepare_for_testing(f_tests_sub, f_tests_cov)
 
             # Execute
             execute_testing(defender.t_subset.tests_ids)
 
             # Update results
             update_results()
+
             # Learn the models
             if x < GAME_ITERATIONS - 1:
                 if attacker.agent_mode is not 'random':

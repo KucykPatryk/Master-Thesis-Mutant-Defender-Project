@@ -8,9 +8,6 @@ from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateCl
     EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
 from copy import deepcopy
 import numpy as np
-import random
-
-from sys import exit
 
 import pandas as pd
 from sklearn import preprocessing
@@ -152,8 +149,8 @@ class Attacker:
 
             # Prediction
             base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
-            n_choises = 2
-            algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choises)
+            n_choices = 2
+            algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
 
             # Initial fit
             X = np.zeros((1, features.shape[1]))
@@ -170,11 +167,9 @@ class Attacker:
 
             # Model selects the mutants
             ids = np.random.choice(self.m_subset.mutants_ids, MODEL_PICK_LIMIT_M, p=pred.T[0], replace=False)
-            # Creates the new subset
 
-            print(self.m_subset.mutants_ids)
+            # Create new subset
             self.m_subset = self.new_selected_subset(self.m_subset, self.pick_limit, ids.tolist())
-            print(self.m_subset.mutants_ids)
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter

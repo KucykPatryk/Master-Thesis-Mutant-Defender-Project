@@ -7,6 +7,11 @@ from .global_variables import *
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateClassifiers, \
+    EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
+from copy import deepcopy
+
 
 class Defender:
     """ The Defender agent"""
@@ -22,7 +27,6 @@ class Defender:
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
-        self.features = object()
 
     @staticmethod
     def generate_tests():
@@ -94,18 +98,49 @@ class Defender:
 
         return scaler.transform(a)
 
-    def prepare_for_testing(self, f_tests_ids):
+    @staticmethod
+    def bandit_algorithm(algorithm_name, base_algorithm, n_choices):
+        """
+        Returns the given by parameter BANDIT_ALGORITHM algorithm
+        :param algorithm_name: Name of the algorithm
+        :param base_algorithm: logistic regression
+        :param n_choices: n choices
+        :return: the algorithm
+        """
+        algorithm = object()
+        if algorithm_name == 'EpsilonGreedy':
+            algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices)
+
+        return algorithm
+
+    def prepare_for_testing(self, f_tests_ids, f_tests_cov):
         """ Prepare agent for the execution """
         if self.agent_mode is 'scikit':
-            self.features = self.encode_features(f_tests_ids)
-            # print(self.features)
+            features = self.encode_features(f_tests_cov)
 
             # Prediction
-            # TO BE IMPLEMENTED
+            base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
+            n_choices = 2
+            algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
+
+            # Initial fit
+            X = np.zeros((1, features.shape[1]))
+            zeros = np.zeros(1)
+            algorithm.partial_fit(X, zeros, zeros)
+
+            pred = algorithm.decision_function(features)
+
+            # Change pred values to prob, so they sum up to 1
+            sum = np.sum(pred.T[0])
+            pred.T[0] /= sum
+            sum = np.sum(pred.T[1])
+            pred.T[1] /= sum
+
             # Model selects the tests
-            # m_pred =
-            # print(m_pred)
-            print('TO BE IMPLEMENTED')
+            ids = np.random.choice(f_tests_cov, MODEL_PICK_LIMIT_T, p=pred.T[0], replace=False)
+
+            # Create new subset
+            self.t_subset = self.new_subset(self.t_subset.create_subset(ids, self.pick_limit))
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
