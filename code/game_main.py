@@ -128,27 +128,14 @@ def filter_tests(cov_map, test_mapping, size):
     i = 0
     # empty = 0
     while True:
-        # if len(filtered_t_dic) == empty:
-        #     sys.exit('ERROR: Cannot find enough matches! Test subset is too big or mutant subset is too small!')
-        # empty = 0
         for key in filtered_t_dic:
-            # if not filtered_t_dic[key]:
-            #     empty += 1
-            #     continue
             choice = random.choice(filtered_t_dic[key])
-            # if choice in filtered_t_ids:
-            #     filtered_t_dic[key].remove(choice)
-            #     continue
             filtered_t_ids.append(choice)
-            # filtered_t_dic[key].remove(choice)
             i += 1
             if i == size:
                 break
         if i == size:
             break
-
-    # print('dic', filtered_t_dic)
-    # print('list', filtered_t_ids)
 
     # Map test number ids to name ids
     for i in range(size):

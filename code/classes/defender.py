@@ -24,9 +24,20 @@ class Defender:
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
         self.encoder = object()
+        if mode == 'scikit':
+            self.bandit = self.create_bandit()
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
+
+    def create_bandit(self):
+        """ Create and return a bandit algorithm object based on logistic regression
+        :return: Bandit algorithm object
+        """
+        base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
+        n_choices = 2
+        algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
+        return algorithm
 
     @staticmethod
     def generate_tests():
@@ -119,16 +130,12 @@ class Defender:
             features = self.encode_features(f_tests_cov)
 
             # Prediction
-            base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
-            n_choices = 2
-            algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
-
             # Initial fit
             X = np.zeros((1, features.shape[1]))
             zeros = np.zeros(1)
-            algorithm.partial_fit(X, zeros, zeros)
+            self.bandit.partial_fit(X, zeros, zeros)
 
-            pred = algorithm.decision_function(features)
+            pred = self.bandit.decision_function(features)
 
             # Change pred values to prob, so they sum up to 1
             sum = np.sum(pred.T[0])
