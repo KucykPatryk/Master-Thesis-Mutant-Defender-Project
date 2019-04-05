@@ -4,8 +4,9 @@ from .test_suite import TestSuite
 from .test_suite import TestSubset
 
 from .global_variables import *
-from classes.vwwrapper import VWWrapper
-
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 class Defender:
     """ The Defender agent"""
@@ -17,12 +18,11 @@ class Defender:
         self.lost = 0  # Times lost against attacker
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
-        # Create the mutant Vowpal Wabbit model
-
+        self.encoder = object()
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
-        self.features = ''
+        self.features = object()
 
     @staticmethod
     def generate_tests():
@@ -70,11 +70,34 @@ class Defender:
         """ Update was in subset count """
         self.t_suite.update_wis(subset_ids)
 
+    def encode_features(self, test_nrs):
+        """ Encode test features
+
+        :param test_nrs: list of test to make feature vector from
+        :return: scaled feature vector as an array
+        """
+        # Retrieve coverage information from the report files
+        v = list()
+        a = np.empty([0, 12], dtype=np.float64)
+        for nr in test_nrs:
+            df = pd.read_csv('../generation/coverage_reports/coverage_report' + nr, sep=',', dtype='category')
+            for e in df.columns[3:]:
+                v.append(float(df[e][0]))
+            v.append((float(self.t_suite.tests[int(nr)].killed_times)))
+            v.append((float(self.t_suite.tests[int(nr)].selected)))
+            a = np.append(a, [v], axis=0)
+            v.clear()
+
+        # Scale values
+        scaler = StandardScaler()
+        scaler.fit(a)
+
+        return scaler.transform(a)
+
     def prepare_for_testing(self, f_tests_ids):
         """ Prepare agent for the execution """
-        if self.agent_mode is 'bandit':
-            # Test features
-            # self.features =
+        if self.agent_mode is 'scikit':
+            self.features = self.encode_features(f_tests_ids)
             # print(self.features)
 
             # Prediction
@@ -82,7 +105,7 @@ class Defender:
             # Model selects the tests
             # m_pred =
             # print(m_pred)
-            return
+            print('TO BE IMPLEMENTED')
 
         elif self.agent_mode is 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter

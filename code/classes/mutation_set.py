@@ -24,7 +24,7 @@ class MutationSet:
         """
         subset = list()
         for i in range(size):
-            subset.append(self.mutants_list[ids_list[i] - 1])
+            subset.append(self.mutants_list[self.mutants_ids.index(ids_list[i])])
         return subset
 
     def create_random_subset(self, size):

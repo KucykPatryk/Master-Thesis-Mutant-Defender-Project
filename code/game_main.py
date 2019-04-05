@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import perf_counter
 from csv import DictWriter
-import pandas as pd
-from sklearn import preprocessing
 
 # Import classes
 from classes.attacker import Attacker
@@ -265,9 +263,7 @@ def main():
     # Generate mutants and tests for a given program
     generate_sets()
 
-    attacker.encoder = attacker.encode_features()
-    # print(attacker.encoder.transform([['STD', '<RETURN>:<NO-OP>', 'null', 'IF:THENPART',
-    #                           'IF:THENPART', '0', '1', '0']]).toarray())
+    attacker.encoder = attacker.features_encoder()
 
     # Make run coverage with JaCoCo possible
     if not path.exists('../generation/coverage_reports'):
@@ -312,6 +308,7 @@ def main():
         for x in range(GAME_ITERATIONS):
             time_start = perf_counter()
             print("ROUND: ", x)
+
             # Select random subset for mutants
             if x > 0:
                 attacker.m_subset = attacker.new_subset(attacker.m_set, MUTANTS_SUBSET_SIZE)
@@ -327,6 +324,8 @@ def main():
 
             # Set up attacker and defender
             attacker.prepare_for_testing()
+            return
+
             # Again create filtered subset for tests based on newest subset of mutants
             f_tests_sub = list()
             i = 0
@@ -342,6 +341,7 @@ def main():
                             break
                 if i == MODEL_PICK_LIMIT_T:
                     break
+
             defender.prepare_for_testing(f_tests_sub)
 
             # Execute
@@ -397,7 +397,8 @@ if __name__ == "__main__":
 
     main()
     # attacker.prepare_for_testing()
-
+    # print(defender.encode_features(['00', '01', '03', '05', '04']))
+    # defender.prepare_for_testing('1')
 
 """ TO DO:
 - For each round calculate code coverage for subset and selected tests
