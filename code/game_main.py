@@ -257,16 +257,18 @@ def main():
         rename('../generation/covMap.csv', cm_path)
         rename('../generation/testMap.csv', tm_path)
 
-    # # Make run coverage with JaCoCo possible
-    # if not path.exists('../generation/coverage_reports'):
-    #     change_separate_class_loader('false')
-    #     run(['./compile_tests.sh'], cwd='../generation/')
-    #     makedirs('../generation/coverage_reports')
-    #     run_tests_coverage()
-    #
-    #     # Change back, so testing with major is possible
-    #     change_separate_class_loader('true')
-    #     run(['./compile_tests.sh'], cwd='../generation/')
+    # Make run coverage with JaCoCo possible
+    if not path.exists('../generation/coverage_reports'):
+        change_separate_class_loader('false')
+        run(['./compile_tests.sh'], cwd='../generation/')
+        makedirs('../generation/coverage_reports')
+        run_tests_coverage()
+
+        # Change back, so testing with major is possible
+        change_separate_class_loader('true')
+        run(['./compile_tests.sh'], cwd='../generation/')
+        # Fix problem after compile, so major sees the mutants
+        run(['./fix_java_ver_compile_problem.sh'], cwd='../generation/')
 
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
@@ -359,6 +361,9 @@ if __name__ == "__main__":
     parser.add_argument('--tests_subset_size', type=int, default=TESTS_SUBSET_SIZE)
     parser.add_argument('--model_pick_limit_multiplier', type=float, default=MODEL_PICK_LIMIT_MULTIPLIER)
     parser.add_argument('--winning_threshold', type=float, default=WINNING_THRESHOLD)
+    parser.add_argument('--attacker_mode', type=str, default=ATTACKER_MODE)
+    parser.add_argument('--defender_mode', type=str, default=DEFENDER_MODE)
+    parser.add_argument('--bandit_algorithm', type=str, default=BANDIT_ALGORITHM)
     parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
     args = parser.parse_args()
 
@@ -367,8 +372,12 @@ if __name__ == "__main__":
     TESTS_SUBSET_SIZE = args.tests_subset_size
     MODEL_PICK_LIMIT_MULTIPLIER = args.model_pick_limit_multiplier
     WINNING_THRESHOLD = args.winning_threshold
-    OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.1f_wt:%.1f' \
-        % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD)
+    ATTACKER_MODE = args.attacker_mode
+    DEFENDER_MODE = args.defender_mode
+    BANDIT_ALGORITHM = args.bandit_algorithm
+    OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.1f_wt:%.1f_am:%s_dm:%s_ba:%s' \
+        % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
+           ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
 
     MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
     MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)

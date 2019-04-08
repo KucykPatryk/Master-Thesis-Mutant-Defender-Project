@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TryWithResourcesJavacFilter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core.internal.analysis.filter</a> &gt; <span class="el_source">TryWithResourcesJavacFilter.java</span></div><h1>TryWithResourcesJavacFilter.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2019 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Evgeny Mandrikov - initial API and implementation
+ *
+ *******************************************************************************/
+package org.jacoco.core.internal.analysis.filter;
+
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+
+/**
+ * Filters code which is generated for try-with-resources statement by javac
+ * versions from 7 to 10.
+ */
+<span class="fc" id="L24">public final class TryWithResourcesJavacFilter implements IFilter {</span>
+
+	public void filter(final MethodNode methodNode,
+			final IFilterContext context, final IFilterOutput output) {
+<span class="fc bfc" id="L28" title="All 2 branches covered.">		if (methodNode.tryCatchBlocks.isEmpty()) {</span>
+<span class="fc" id="L29">			return;</span>
+		}
+<span class="fc" id="L31">		final Matcher matcher = new Matcher(output);</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">		for (final TryCatchBlockNode t : methodNode.tryCatchBlocks) {</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">			if (&quot;java/lang/Throwable&quot;.equals(t.type)) {</span>
+				for (final Matcher.JavacPattern p : Matcher.JavacPattern
+<span class="fc bfc" id="L35" title="All 2 branches covered.">						.values()) {</span>
+<span class="fc" id="L36">					matcher.start(t.handler);</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">					if (matcher.matchJavac(p)) {</span>
+<span class="fc" id="L38">						break;</span>
+					}
+				}
+			}
+		}
+<span class="fc" id="L43">	}</span>
+
+	/**
+	 * javac from JDK 7 and 8 generates bytecode that is equivalent to the
+	 * compilation of source code that is described in &lt;a href=
+	 * &quot;http://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.20.3.1&quot;&gt;JLS
+	 * 14.20.3. try-with-resources&lt;/a&gt;:
+	 * 
+	 * &lt;pre&gt;
+	 *     Resource r = ...;
+	 *     Throwable primaryExc = null;
+	 *     try {
+	 *         ...
+	 *     } finally {
+	 *         if (r != null) {
+	 *             if (primaryExc != null) {
+	 *                 try {
+	 *                     r.close();
+	 *                 } catch (Throwable suppressedExc) {
+	 *                     primaryExc.addSuppressed(suppressedExc);
+	 *                 }
+	 *             } else {
+	 *                 r.close();
+	 *             }
+	 *         }
+	 *     }
+	 * &lt;/pre&gt;
+	 *
+	 * Case of multiple resources looks like multiple nested try-with-resources
+	 * statements. javac from JDK 9 EA b160 does the same, but with some
+	 * optimizations (see &lt;a href=
+	 * &quot;https://bugs.openjdk.java.net/browse/JDK-7020499&quot;&gt;JDK-7020499&lt;/a&gt;):
+	 * &lt;ul&gt;
+	 * &lt;li&gt;&lt;code&gt;null&lt;/code&gt; check for resource is omitted when it is
+	 * initialized using &lt;code&gt;new&lt;/code&gt;&lt;/li&gt;
+	 * &lt;li&gt;synthetic method &lt;code&gt;$closeResource&lt;/code&gt; containing
+	 * &lt;code&gt;null&lt;/code&gt; check of primaryExc and calls to methods
+	 * &lt;code&gt;addSuppressed&lt;/code&gt; and &lt;code&gt;close&lt;/code&gt; is used when number of
+	 * copies of closing logic reaches threshold, &lt;code&gt;null&lt;/code&gt; check of
+	 * resource (if present) is done before call of this method&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 * During matching association between resource and slot of variable is done
+	 * on exceptional path and is used to find close of resource on normal path.
+	 * Order of loading variables primaryExc and r is different in different
+	 * cases, which implies that this order should be determined before
+	 * association. So {@link JavacPattern} defines all possible variants that
+	 * will be tried sequentially.
+	 */
+<span class="fc" id="L91">	static class Matcher extends AbstractMatcher {</span>
+		private final IFilterOutput output;
+
+		private String expectedOwner;
+
+		private AbstractInsnNode start;
+
+<span class="fc" id="L98">		Matcher(final IFilterOutput output) {</span>
+<span class="fc" id="L99">			this.output = output;</span>
+<span class="fc" id="L100">		}</span>
+
+<span class="fc" id="L102">		private enum JavacPattern {</span>
+			/**
+			 * resource is loaded after primaryExc, &lt;code&gt;null&lt;/code&gt; check of
+			 * resource is omitted, method &lt;code&gt;$closeResource&lt;/code&gt; is used
+			 */
+<span class="fc" id="L107">			OPTIMAL,</span>
+			/**
+			 * resource is loaded before primaryExc and both are checked on
+			 * &lt;code&gt;null&lt;/code&gt;
+			 */
+<span class="fc" id="L112">			FULL,</span>
+			/**
+			 * resource is loaded after primaryExc, &lt;code&gt;null&lt;/code&gt; check of
+			 * resource is omitted
+			 */
+<span class="fc" id="L117">			OMITTED_NULL_CHECK,</span>
+			/**
+			 * resource is loaded before primaryExc and checked on
+			 * &lt;code&gt;null&lt;/code&gt;, method &lt;code&gt;$closeResource&lt;/code&gt; is used
+			 */
+<span class="fc" id="L122">			METHOD,</span>
+		}
+
+		private void start(final AbstractInsnNode start) {
+<span class="fc" id="L126">			this.start = start;</span>
+<span class="fc" id="L127">			cursor = start.getPrevious();</span>
+<span class="fc" id="L128">			vars.clear();</span>
+<span class="fc" id="L129">			expectedOwner = null;</span>
+<span class="fc" id="L130">		}</span>
+
+		private boolean matchJavac(final JavacPattern p) {
+			// &quot;catch (Throwable t)&quot;
+<span class="fc" id="L134">			nextIsVar(Opcodes.ASTORE, &quot;t1&quot;);</span>
+			// &quot;primaryExc = t&quot;
+<span class="fc" id="L136">			nextIsVar(Opcodes.ALOAD, &quot;t1&quot;);</span>
+<span class="fc" id="L137">			nextIsVar(Opcodes.ASTORE, &quot;primaryExc&quot;);</span>
+			// &quot;throw t&quot;
+<span class="fc" id="L139">			nextIsVar(Opcodes.ALOAD, &quot;t1&quot;);</span>
+<span class="fc" id="L140">			nextIs(Opcodes.ATHROW);</span>
+
+			// &quot;catch (any t)&quot;
+<span class="fc" id="L143">			nextIsVar(Opcodes.ASTORE, &quot;t2&quot;);</span>
+<span class="fc" id="L144">			nextIsJavacClose(p, &quot;e&quot;);</span>
+			// &quot;throw t&quot;
+<span class="fc" id="L146">			nextIsVar(Opcodes.ALOAD, &quot;t2&quot;);</span>
+<span class="fc" id="L147">			nextIs(Opcodes.ATHROW);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">			if (cursor == null) {</span>
+<span class="fc" id="L149">				return false;</span>
+			}
+<span class="fc" id="L151">			final AbstractInsnNode end = cursor;</span>
+
+<span class="fc" id="L153">			AbstractInsnNode startOnNonExceptionalPath = start.getPrevious();</span>
+<span class="fc" id="L154">			cursor = startOnNonExceptionalPath;</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">			while (!nextIsJavacClose(p, &quot;n&quot;)) {</span>
+<span class="fc" id="L156">				startOnNonExceptionalPath = startOnNonExceptionalPath</span>
+						.getPrevious();
+<span class="fc" id="L158">				cursor = startOnNonExceptionalPath;</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">				if (cursor == null) {</span>
+<span class="fc" id="L160">					return false;</span>
+				}
+			}
+<span class="fc" id="L163">			startOnNonExceptionalPath = startOnNonExceptionalPath.getNext();</span>
+
+<span class="fc" id="L165">			final AbstractInsnNode m = cursor;</span>
+<span class="fc" id="L166">			next();</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">			if (cursor.getOpcode() != Opcodes.GOTO) {</span>
+<span class="fc" id="L168">				cursor = m;</span>
+			}
+
+<span class="fc" id="L171">			output.ignore(startOnNonExceptionalPath, cursor);</span>
+<span class="fc" id="L172">			output.ignore(start, end);</span>
+<span class="fc" id="L173">			return true;</span>
+		}
+
+		/**
+		 * On a first invocation will associate variables with names &quot;r&quot; and
+		 * &quot;primaryExc&quot;, on subsequent invocations will use those associations
+		 * for checks.
+		 */
+		private boolean nextIsJavacClose(final JavacPattern p,
+				final String ctx) {
+<span class="pc bfc" id="L183" title="All 2 branches covered.">			switch (p) {</span>
+			case METHOD:
+			case FULL:
+				// &quot;if (r != null)&quot;
+<span class="fc" id="L187">				nextIsVar(Opcodes.ALOAD, &quot;r&quot;);</span>
+<span class="fc" id="L188">				nextIs(Opcodes.IFNULL);</span>
+			}
+<span class="pc bpc" id="L190" title="1 of 3 branches missed.">			switch (p) {</span>
+			case METHOD:
+			case OPTIMAL:
+<span class="fc" id="L193">				nextIsVar(Opcodes.ALOAD, &quot;primaryExc&quot;);</span>
+<span class="fc" id="L194">				nextIsVar(Opcodes.ALOAD, &quot;r&quot;);</span>
+<span class="fc" id="L195">				nextIs(Opcodes.INVOKESTATIC);</span>
+<span class="fc bfc" id="L196" title="All 2 branches covered.">				if (cursor != null) {</span>
+<span class="fc" id="L197">					final MethodInsnNode m = (MethodInsnNode) cursor;</span>
+<span class="pc bpc" id="L198" title="2 of 4 branches missed.">					if (&quot;$closeResource&quot;.equals(m.name)</span>
+							&amp;&amp; &quot;(Ljava/lang/Throwable;Ljava/lang/AutoCloseable;)V&quot;
+									.equals(m.desc)) {
+<span class="fc" id="L201">						return true;</span>
+					}
+<span class="nc" id="L203">					cursor = null;</span>
+				}
+<span class="fc" id="L205">				return false;</span>
+			case FULL:
+			case OMITTED_NULL_CHECK:
+<span class="fc" id="L208">				nextIsVar(Opcodes.ALOAD, &quot;primaryExc&quot;);</span>
+				// &quot;if (primaryExc != null)&quot;
+<span class="fc" id="L210">				nextIs(Opcodes.IFNULL);</span>
+				// &quot;r.close()&quot;
+<span class="fc" id="L212">				nextIsClose();</span>
+<span class="fc" id="L213">				nextIs(Opcodes.GOTO);</span>
+				// &quot;catch (Throwable t)&quot;
+<span class="fc" id="L215">				nextIsVar(Opcodes.ASTORE, ctx + &quot;t&quot;);</span>
+				// &quot;primaryExc.addSuppressed(t)&quot;
+<span class="fc" id="L217">				nextIsVar(Opcodes.ALOAD, &quot;primaryExc&quot;);</span>
+<span class="fc" id="L218">				nextIsVar(Opcodes.ALOAD, ctx + &quot;t&quot;);</span>
+<span class="fc" id="L219">				nextIsInvokeVirtual(&quot;java/lang/Throwable&quot;, &quot;addSuppressed&quot;);</span>
+<span class="fc" id="L220">				nextIs(Opcodes.GOTO);</span>
+				// &quot;r.close()&quot;
+<span class="fc" id="L222">				nextIsClose();</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">				return cursor != null;</span>
+			default:
+<span class="nc" id="L225">				throw new AssertionError();</span>
+			}
+		}
+
+		private void nextIsClose() {
+<span class="fc" id="L230">			nextIsVar(Opcodes.ALOAD, &quot;r&quot;);</span>
+<span class="fc" id="L231">			next();</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">			if (cursor == null) {</span>
+<span class="fc" id="L233">				return;</span>
+			}
+<span class="pc bpc" id="L235" title="1 of 4 branches missed.">			if (cursor.getOpcode() != Opcodes.INVOKEINTERFACE</span>
+					&amp;&amp; cursor.getOpcode() != Opcodes.INVOKEVIRTUAL) {
+<span class="nc" id="L237">				cursor = null;</span>
+<span class="nc" id="L238">				return;</span>
+			}
+<span class="fc" id="L240">			final MethodInsnNode m = (MethodInsnNode) cursor;</span>
+<span class="pc bpc" id="L241" title="2 of 4 branches missed.">			if (!&quot;close&quot;.equals(m.name) || !&quot;()V&quot;.equals(m.desc)) {</span>
+<span class="nc" id="L242">				cursor = null;</span>
+<span class="nc" id="L243">				return;</span>
+			}
+<span class="fc" id="L245">			final String actual = m.owner;</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">			if (expectedOwner == null) {</span>
+<span class="fc" id="L247">				expectedOwner = actual;</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">			} else if (!expectedOwner.equals(actual)) {</span>
+<span class="nc" id="L249">				cursor = null;</span>
+			}
+<span class="fc" id="L251">		}</span>
+
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>Code Coverage Report for JaCoCo 0.8.3</div></body></html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>KotlinDefaultArgumentsFilter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core.internal.analysis.filter</a> &gt; <span class="el_source">KotlinDefaultArgumentsFilter.java</span></div><h1>KotlinDefaultArgumentsFilter.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2019 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Evgeny Mandrikov - initial API and implementation
+ *
+ *******************************************************************************/
+package org.jacoco.core.internal.analysis.filter;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
+
+/**
+ * Filters branches that Kotlin compiler generates for default arguments.
+ * 
+ * For each default argument Kotlin compiler generates following bytecode to
+ * determine if it should be used or not:
+ * 
+ * &lt;pre&gt;
+ * ILOAD maskVar
+ * ICONST_x, BIPUSH, SIPUSH, LDC or LDC_W
+ * IAND
+ * IFEQ label
+ * default argument
+ * label:
+ * &lt;/pre&gt;
+ * 
+ * Where &lt;code&gt;maskVar&lt;/code&gt; is penultimate argument of synthetic method with
+ * suffix &quot;$default&quot;. And its value can't be zero - invocation with all
+ * arguments uses original non synthetic method, thus &lt;code&gt;IFEQ&lt;/code&gt;
+ * instructions should be ignored.
+ */
+<span class="fc" id="L44">public final class KotlinDefaultArgumentsFilter implements IFilter {</span>
+
+	static boolean isDefaultArgumentsMethodName(final String methodName) {
+<span class="fc" id="L47">		return methodName.endsWith(&quot;$default&quot;);</span>
+	}
+
+	public void filter(final MethodNode methodNode,
+			final IFilterContext context, final IFilterOutput output) {
+<span class="fc bfc" id="L52" title="All 2 branches covered.">		if ((methodNode.access &amp; Opcodes.ACC_SYNTHETIC) == 0) {</span>
+<span class="fc" id="L53">			return;</span>
+		}
+<span class="fc bfc" id="L55" title="All 2 branches covered.">		if (!isDefaultArgumentsMethodName(methodNode.name)) {</span>
+<span class="fc" id="L56">			return;</span>
+		}
+<span class="fc bfc" id="L58" title="All 2 branches covered.">		if (!KotlinGeneratedFilter.isKotlinClass(context)) {</span>
+<span class="fc" id="L59">			return;</span>
+		}
+
+<span class="fc" id="L62">		new Matcher().match(methodNode, output);</span>
+<span class="fc" id="L63">	}</span>
+
+<span class="fc" id="L65">	private static class Matcher extends AbstractMatcher {</span>
+		public void match(final MethodNode methodNode,
+				final IFilterOutput output) {
+<span class="fc" id="L68">			cursor = methodNode.instructions.getFirst();</span>
+
+<span class="fc" id="L70">			final Set&lt;AbstractInsnNode&gt; ignore = new HashSet&lt;AbstractInsnNode&gt;();</span>
+<span class="fc" id="L71">			final int maskVar = Type.getMethodType(methodNode.desc)</span>
+					.getArgumentTypes().length - 2;
+			while (true) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">				if (cursor.getOpcode() != Opcodes.ILOAD) {</span>
+<span class="fc" id="L75">					break;</span>
+				}
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">				if (((VarInsnNode) cursor).var != maskVar) {</span>
+<span class="nc" id="L78">					break;</span>
+				}
+<span class="fc" id="L80">				next();</span>
+<span class="fc" id="L81">				nextIs(Opcodes.IAND);</span>
+<span class="fc" id="L82">				nextIs(Opcodes.IFEQ);</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">				if (cursor == null) {</span>
+<span class="nc" id="L84">					return;</span>
+				}
+<span class="fc" id="L86">				ignore.add(cursor);</span>
+<span class="fc" id="L87">				cursor = ((JumpInsnNode) cursor).label;</span>
+<span class="fc" id="L88">				skipNonOpcodes();</span>
+			}
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">			for (AbstractInsnNode i : ignore) {</span>
+<span class="fc" id="L92">				output.ignore(i, i);</span>
+			}
+<span class="fc" id="L94">		}</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>Code Coverage Report for JaCoCo 0.8.3</div></body></html>
