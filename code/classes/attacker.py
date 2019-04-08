@@ -1,9 +1,10 @@
 from subprocess import run
 from .global_variables import *
+from os import path
 
 from .mutation_set import MutationSet
 from .mutation_set import MutationSubset
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateClassifiers, \
     EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
 from copy import deepcopy
@@ -16,6 +17,8 @@ from sklearn import preprocessing
 class Attacker:
     """ The Attacker agent"""
     def __init__(self, mode, pick_limit, subset_size):
+        if not path.isdir('../generation/mutants'):
+            self.generate_mutants()
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
         self.m_subset = self.new_subset(self.m_set, subset_size)
@@ -24,19 +27,24 @@ class Attacker:
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
         self.encoder = object()
-        if mode == 'scikit':
-            self.bandit = self.create_bandit()
+        self.bandit = None
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
 
-    def create_bandit(self):
+    def create_bandit(self, num_features):
         """ Create and return a bandit algorithm object based on logistic regression
         :return: Bandit algorithm object
         """
-        base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
+        base_algorithm = SGDClassifier(random_state=123)
         n_choices = 2
         algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
+
+        # Initial fit
+        X = np.zeros((1, num_features))
+        zeros = np.zeros(1)
+        algorithm.fit(X, zeros, zeros)
+
         return algorithm
 
     @staticmethod
@@ -148,7 +156,7 @@ class Attacker:
         """
         algorithm = object()
         if algorithm_name == 'EpsilonGreedy':
-            algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices)
+            algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
 
         return algorithm
 
@@ -158,12 +166,10 @@ class Attacker:
             # Mutant features
             features = self.encode_features(self.m_subset.mutants_ids)
 
-            # Prediction
-            # Initial fit
-            X = np.zeros((1, features.shape[1]))
-            zeros = np.zeros(1)
-            self.bandit.partial_fit(X, zeros, zeros)
+            if not self.bandit:
+                self.bandit = self.create_bandit(features.shape[1])
 
+            # Prediction
             pred = self.bandit.decision_function(features)
 
             # Change pred values to prob, so they sum up to 1
@@ -184,3 +190,10 @@ class Attacker:
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """
+        features = self.encode_features(self.m_subset.mutants_ids)
+        a = np.zeros((features.shape[0]))
+        rml = list()
+        for m in self.m_subset.mutants_ids:
+            rml.append(1 if self.m_set.mutants[int(m)-1].last_killed else 0)
+        r = np.array(rml).reshape(len(rml))
+        self.bandit.partial_fit(features, a, r)

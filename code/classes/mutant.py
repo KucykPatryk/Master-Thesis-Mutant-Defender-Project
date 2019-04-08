@@ -10,10 +10,12 @@ class Mutant:
         self.killed_times = 0  # How many times this mutant was killed
         self.subset_chosen_times = 0  # How many times it was in a subset
         self.selected = 0  # Times selected by an agent
+        self.last_killed = False  # True if was killed in last round it was picked
 
     def update_kills(self):
         """ Update the kill count """
         self.killed_times += 1
+        self.last_killed = True
         # print("M ID: ", self.id, " Score: ", self.score.points, " KT: ", self.killed_times)
 
     def update_score(self, score):
@@ -26,6 +28,7 @@ class Mutant:
     def update_survived(self):
         """ Update survived count """
         self.survived_times += 1
+        self.last_killed = False
 
     def update_subset_chosen(self):
         """ Update chosen to a subset times count """

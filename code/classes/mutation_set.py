@@ -75,7 +75,7 @@ class MutationSubset(MutationSet):
             subset_ids.append(int(self.mutants_list[i].split(':')[0]))
 
         sorted_ids = [e for e in sorted_ids if e not in subset_ids]
-        # sorted_ids.sort(key=int)
+
         return sorted_ids
 
     def create_exclude_ids_file(self):

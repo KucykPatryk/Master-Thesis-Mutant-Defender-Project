@@ -28,7 +28,7 @@ kill_ratio_plot = list()
 
 def change_separate_class_loader(param):
     """ Change the parameter separateClassLoader to true or false"""
-    file = '../generation/evosuite-tests/' + TESTS_FOLDER_NAME + '/' + TESTS_FILE_NAME
+    file = '../generation/evosuite-tests/' + defender.tests_folder_name + '/' + defender.tests_file_name
     with open(file, 'r') as etc:
         data = etc.readlines()
         for index, line in enumerate(data):
@@ -41,17 +41,9 @@ def change_separate_class_loader(param):
         etc.writelines(data)
 
 
-def generate_sets():
-    """ Generate sets for mutants and tests """
-    if path.isdir('../generation/mutants') == 0:
-        attacker.generate_mutants()
-    if path.isdir('../generation/evosuite-tests') == 0:
-        defender.generate_tests()
-
-
 def execute_testing(testing_set, file='./run_tests.sh', cov_parm=''):
     """ Do testing on selected mutants by a set of selected tests """
-    test_class = TESTS_FOLDER_NAME + '.' + TESTS_FILE_NAME[:-5]
+    test_class = defender.tests_folder_name + '.' + defender.tests_file_name[:-5]
     test_case = ','.join(['test' + e for e in testing_set])
 
     if file == './run_test_coverage.sh':
@@ -126,7 +118,6 @@ def filter_tests(cov_map, test_mapping, size):
 
     # Filtered subset for tests
     i = 0
-    # empty = 0
     while True:
         for key in filtered_t_dic:
             choice = random.choice(filtered_t_dic[key])
@@ -246,22 +237,8 @@ def run_tests_coverage():
 def main():
     """ Main function to run it all """
 
-    ''' Generate and create main parts before the loop '''
-    # Generate mutants and tests for a given program
-    generate_sets()
-
-    attacker.encoder = attacker.features_encoder()
-
-    # Make run coverage with JaCoCo possible
-    if not path.exists('../generation/coverage_reports'):
-        change_separate_class_loader('false')
-        run(['./compile_tests.sh'], cwd='../generation/')
-        makedirs('../generation/coverage_reports')
-        run_tests_coverage()
-
-        # Change back, so testing with major is possible
-        change_separate_class_loader('true')
-        run(['./compile_tests.sh'], cwd='../generation/')
+    if attacker.agent_mode != 'random':
+        attacker.encoder = attacker.features_encoder()
 
     # Create output directory if it does not exist
     if not path.exists('output'):
@@ -270,9 +247,9 @@ def main():
         makedirs('output/' + OUTPUT_RUN_DIR)
 
     # Generate coverage map for filtering before the game starts
-    cm_path = '../generation/covMap-' + TESTS_FOLDER_NAME + '.csv'
-    tm_path = '../generation/testMap-' + TESTS_FOLDER_NAME + '.csv'
-    if path.isfile(cm_path) == 0:
+    cm_path = '../generation/covMap-' + defender.tests_folder_name + '.csv'
+    tm_path = '../generation/testMap-' + defender.tests_folder_name + '.csv'
+    if not path.isfile(cm_path):
         with open('../generation/exclude_mutants.txt', 'w') as ef:
             ef.write('')
         execute_testing(defender.t_suite.tests_ids)
@@ -280,10 +257,19 @@ def main():
         rename('../generation/covMap.csv', cm_path)
         rename('../generation/testMap.csv', tm_path)
 
+    # # Make run coverage with JaCoCo possible
+    # if not path.exists('../generation/coverage_reports'):
+    #     change_separate_class_loader('false')
+    #     run(['./compile_tests.sh'], cwd='../generation/')
+    #     makedirs('../generation/coverage_reports')
+    #     run_tests_coverage()
+    #
+    #     # Change back, so testing with major is possible
+    #     change_separate_class_loader('true')
+    #     run(['./compile_tests.sh'], cwd='../generation/')
+
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
-    # print(test_mapping)
-    # print(cov_map)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     with open('output/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
@@ -299,9 +285,7 @@ def main():
             # Select random subset for mutants
             if x > 0:
                 attacker.m_subset = attacker.new_subset(attacker.m_set, MUTANTS_SUBSET_SIZE)
-                update_was_in_subset(attacker.m_subset.mutants_ids, attacker)
-            else:
-                update_was_in_subset(attacker.m_subset.mutants_ids, attacker)
+            update_was_in_subset(attacker.m_subset.mutants_ids, attacker)
 
             # Create filtered subset for tests
             f_tests = filter_tests(cov_map, test_mapping, TESTS_SUBSET_SIZE)
@@ -389,14 +373,7 @@ if __name__ == "__main__":
     MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
     MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 
-    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
+    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
 
     main()
-    # attacker.prepare_for_testing()
-    # print(defender.encode_features(['00', '01', '03', '05', '04']))
-    # defender.prepare_for_testing('1')
-
-""" TO DO:
-- For each round calculate code coverage for subset and selected tests
-"""

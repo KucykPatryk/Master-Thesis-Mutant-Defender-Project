@@ -1,4 +1,5 @@
 from subprocess import run
+from os import path
 
 from .test_suite import TestSuite
 from .test_suite import TestSubset
@@ -7,7 +8,7 @@ from .global_variables import *
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateClassifiers, \
     EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
 from copy import deepcopy
@@ -16,6 +17,10 @@ from copy import deepcopy
 class Defender:
     """ The Defender agent"""
     def __init__(self, mode, pick_limit, subset_size):
+        if not path.isdir('../generation/evosuite-tests'):
+            self.generate_tests()
+        self.tests_folder_name = next(walk('../generation/evosuite-tests/'))[1][0]
+        self.tests_file_name = next(walk('../generation/evosuite-tests/' + self.tests_folder_name))[2][0]
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
         self.t_subset = self.new_subset(self.t_suite.create_random_subset(subset_size))
@@ -24,19 +29,24 @@ class Defender:
         self.last_winner = False  # True if won in last round
         self.pick_limit = pick_limit
         self.encoder = object()
-        if mode == 'scikit':
-            self.bandit = self.create_bandit()
+        self.bandit = None
 
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
 
-    def create_bandit(self):
+    def create_bandit(self, num_features):
         """ Create and return a bandit algorithm object based on logistic regression
         :return: Bandit algorithm object
         """
-        base_algorithm = LogisticRegression(random_state=123, solver='lbfgs')
+        base_algorithm = SGDClassifier(random_state=123)
         n_choices = 2
         algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
+
+        # Initial fit
+        X = np.zeros((1, num_features))
+        zeros = np.zeros(1)
+        algorithm.fit(X, zeros, zeros)
+
         return algorithm
 
     @staticmethod
@@ -44,11 +54,10 @@ class Defender:
         """ Generate mutants with context and log files """
         run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME], cwd='../generation/')
 
-    @staticmethod
-    def read_test_ids():
+    def read_test_ids(self):
         """ Read test ids from the java file with tests and save it as a list """
         ids = list()
-        with open('../generation/evosuite-tests/' + TESTS_FOLDER_NAME + '/' + TESTS_FILE_NAME) as f:
+        with open('../generation/evosuite-tests/' + self.tests_folder_name + '/' + self.tests_file_name) as f:
             for line in f:
                 if line[:13] in '  public void':
                     ln = line.split()
@@ -120,7 +129,7 @@ class Defender:
         """
         algorithm = object()
         if algorithm_name == 'EpsilonGreedy':
-            algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices)
+            algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
 
         return algorithm
 
@@ -129,12 +138,10 @@ class Defender:
         if self.agent_mode is 'scikit':
             features = self.encode_features(f_tests_cov)
 
-            # Prediction
-            # Initial fit
-            X = np.zeros((1, features.shape[1]))
-            zeros = np.zeros(1)
-            self.bandit.partial_fit(X, zeros, zeros)
+            if not self.bandit:
+                self.bandit = self.create_bandit(features.shape[1])
 
+            # Prediction
             pred = self.bandit.decision_function(features)
 
             # Change pred values to prob, so they sum up to 1
@@ -155,3 +162,10 @@ class Defender:
 
     def learn(self):
         """ Learn after the tests are run through Major and results are updated """
+        features = self.encode_features(self.t_subset.tests_ids)
+        a = np.zeros((features.shape[0]))
+        rml = list()
+        for t in self.t_subset.tests_ids:
+            rml.append(1 if self.t_suite.tests[int(t) - 1].last_kill else 0)
+        r = np.array(rml).reshape(len(rml))
+        self.bandit.partial_fit(features, a, r)
