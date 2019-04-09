@@ -1,6 +1,6 @@
 import argparse
 from subprocess import run
-from os import path, rename, makedirs
+from os import path, rename, makedirs, environ
 import random
 import matplotlib.pyplot as plt
 import numpy as np
@@ -384,5 +384,7 @@ if __name__ == "__main__":
 
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
     attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+
+    # print(environ['PATH'])
 
     main()

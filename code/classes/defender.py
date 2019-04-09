@@ -135,7 +135,7 @@ class Defender:
 
     def prepare_for_testing(self, f_tests_ids, f_tests_cov):
         """ Prepare agent for the execution """
-        if self.agent_mode is 'scikit':
+        if self.agent_mode == 'scikit':
             features = self.encode_features(f_tests_cov)
 
             if not self.bandit:
@@ -156,7 +156,7 @@ class Defender:
             # Create new subset
             self.t_subset = self.new_subset(self.t_subset.create_subset(ids, self.pick_limit))
 
-        elif self.agent_mode is 'random':
+        elif self.agent_mode == 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
             self.t_subset = self.new_subset(self.t_subset.create_subset(f_tests_ids, self.pick_limit))
 

@@ -162,7 +162,7 @@ class Attacker:
 
     def prepare_for_testing(self):
         """ Prepare agent for the execution """
-        if self.agent_mode is 'scikit':
+        if self.agent_mode == 'scikit':
             # Mutant features
             features = self.encode_features(self.m_subset.mutants_ids)
 
@@ -184,7 +184,7 @@ class Attacker:
             # Create new subset
             self.m_subset = self.new_selected_subset(self.m_subset, self.pick_limit, ids.tolist())
 
-        elif self.agent_mode is 'random':
+        elif self.agent_mode == 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter
             self.m_subset = self.new_subset(self.m_subset, self.pick_limit)
 
