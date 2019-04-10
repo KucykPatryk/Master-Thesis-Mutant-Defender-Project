@@ -17,10 +17,11 @@ from copy import deepcopy
 class Defender:
     """ The Defender agent"""
     def __init__(self, mode, pick_limit, subset_size):
-        if not path.isdir('../generation/evosuite-tests'):
+        if not path.isdir('../generation/programs/' + PROGRAM + '/evosuite-tests'):
             self.generate_tests()
-        self.tests_folder_name = next(walk('../generation/evosuite-tests/'))[1][0]
-        self.tests_file_name = next(walk('../generation/evosuite-tests/' + self.tests_folder_name))[2][0]
+        self.tests_folder_name = next(walk('../generation/programs/' + PROGRAM + '/evosuite-tests/'))[1][0]
+        self.tests_file_name = next(walk('../generation/programs/' + PROGRAM + '/evosuite-tests/' +
+                                         self.tests_folder_name))[2][0]
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids))
         self.t_subset = self.new_subset(self.t_suite.create_random_subset(subset_size))
@@ -52,12 +53,14 @@ class Defender:
     @staticmethod
     def generate_tests():
         """ Generate mutants with context and log files """
-        run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME], cwd='../generation/')
+        run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME], cwd='../generation/programs/' +
+                                                                                    PROGRAM + '/')
 
     def read_test_ids(self):
         """ Read test ids from the java file with tests and save it as a list """
         ids = list()
-        with open('../generation/evosuite-tests/' + self.tests_folder_name + '/' + self.tests_file_name) as f:
+        with open('../generation/programs/' + PROGRAM + '/evosuite-tests/' + self.tests_folder_name + '/' +
+                  self.tests_file_name) as f:
             for line in f:
                 if line[:13] in '  public void':
                     ln = line.split()
@@ -87,8 +90,7 @@ class Defender:
             self.lose()
 
         self.t_subset.update_killed(killed)
-        # self.t_subset.update_tests(ids, kill_ratio)
-        self.t_suite.update_tests(ids, kill_ratio)
+        self.t_suite.update_tests(ids, kill_ratio, self.t_subset.tests_ids)
 
     def update_wis(self, subset_ids):
         """ Update was in subset count """
@@ -104,7 +106,8 @@ class Defender:
         v = list()
         a = np.empty([0, 12], dtype=np.float64)
         for nr in test_nrs:
-            df = pd.read_csv('../generation/coverage_reports/coverage_report' + nr, sep=',', dtype='category')
+            df = pd.read_csv('../generation/programs/' + PROGRAM + '/coverage_reports/coverage_report' +
+                             nr, sep=',', dtype='category')
             for e in df.columns[3:]:
                 v.append(float(df[e][0]))
             v.append((float(self.t_suite.tests[int(nr)].killed_times)))

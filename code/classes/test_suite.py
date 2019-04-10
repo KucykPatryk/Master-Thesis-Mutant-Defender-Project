@@ -35,7 +35,7 @@ class TestSuite:
         subset = random.sample(self.tests_ids, size)
         return subset
 
-    def update_tests(self, ids, kill_ratio):
+    def update_tests(self, ids, kill_ratio, subset_ids):
         """ Update test values
 
         :param ids: a list with test ids that killed
@@ -46,7 +46,8 @@ class TestSuite:
         for i in range(len(ids)):
             self.tests[int(test_map[int(ids[i])]) - 1].update_kills()
             self.tests[int(test_map[int(ids[i])]) - 1].update_score(kill_ratio)
-            self.tests[int(test_map[int(ids[i])]) - 1].update_selected()
+        for t in subset_ids:
+            self.tests[int(t) - 1].update_selected()
 
     def update_wis(self, subset_ids):
         """ Update was in subset count """

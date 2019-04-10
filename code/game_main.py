@@ -1,6 +1,6 @@
 import argparse
 from subprocess import run
-from os import path, rename, makedirs, environ
+from os import path, rename, makedirs
 import random
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +28,8 @@ kill_ratio_plot = list()
 
 def change_separate_class_loader(param):
     """ Change the parameter separateClassLoader to true or false"""
-    file = '../generation/evosuite-tests/' + defender.tests_folder_name + '/' + defender.tests_file_name
+    file = '../generation/programs/' + PROGRAM + '/evosuite-tests/' + defender.tests_folder_name + '/' + \
+           defender.tests_file_name
     with open(file, 'r') as etc:
         data = etc.readlines()
         for index, line in enumerate(data):
@@ -47,16 +48,16 @@ def execute_testing(testing_set, file='./run_tests.sh', cov_parm=''):
     test_case = ','.join(['test' + e for e in testing_set])
 
     if file == './run_test_coverage.sh':
-        run([file, test_class, test_case, cov_parm], cwd='../generation/')
+        run([file, test_class, test_case, cov_parm], cwd='../generation/programs/' + PROGRAM + '/')
     else:
-        run([file, test_class, test_case], cwd='../generation/')
+        run([file, test_class, test_case], cwd='../generation/programs/' + PROGRAM + '/')
 
 
 def update_results():
     """ Updating results after last round """
     attacker_won = True
 
-    with open('../generation/summary.csv') as f:
+    with open('../generation/programs/' + PROGRAM + '/summary.csv') as f:
         f.readline()
         summary = f.readline().split(',')
         kill_ratio = int(summary[2])/MODEL_PICK_LIMIT_M  # The ratio of killed mutants by the tests
@@ -66,7 +67,7 @@ def update_results():
     if kill_ratio > WINNING_THRESHOLD:
         attacker_won = False
 
-    with open('../generation/killMap.csv') as f2:
+    with open('../generation/programs/' + PROGRAM + '/killMap.csv') as f2:
         f2.readline()
         tests = list()  # a list of test ids that killed a mutant
         mutants = list()  # a list of mutant ids that were killed
@@ -79,7 +80,7 @@ def update_results():
     defender.update(not attacker_won, summary[2], tests, kill_ratio)
 
 
-def cov_map_dic(file_path='../generation/covMap.csv'):
+def cov_map_dic(file_path='../generation/programs/' + PROGRAM + '/covMap.csv'):
     """ Save and store covered mutants by tests in a dictionary,
     where key is test id and value is an array of mutant ids """
     cov_tests = dict()
@@ -247,28 +248,28 @@ def main():
         makedirs('output/' + OUTPUT_RUN_DIR)
 
     # Generate coverage map for filtering before the game starts
-    cm_path = '../generation/covMap-' + defender.tests_folder_name + '.csv'
-    tm_path = '../generation/testMap-' + defender.tests_folder_name + '.csv'
+    cm_path = '../generation/programs/' + PROGRAM + '/covMap-' + defender.tests_folder_name + '.csv'
+    tm_path = '../generation/programs/' + PROGRAM + '/testMap-' + defender.tests_folder_name + '.csv'
     if not path.isfile(cm_path):
-        with open('../generation/exclude_mutants.txt', 'w') as ef:
+        with open('../generation/programs/' + PROGRAM + '/exclude_mutants.txt', 'w') as ef:
             ef.write('')
         execute_testing(defender.t_suite.tests_ids)
         # Change name, so next time same program runs, it will not be necessary, to run the execution again
-        rename('../generation/covMap.csv', cm_path)
-        rename('../generation/testMap.csv', tm_path)
+        rename('../generation/programs/' + PROGRAM + '/covMap.csv', cm_path)
+        rename('../generation/programs/' + PROGRAM + '/testMap.csv', tm_path)
 
     # Make run coverage with JaCoCo possible
-    if not path.exists('../generation/coverage_reports'):
+    if not path.exists('../generation/programs/' + PROGRAM + '/coverage_reports'):
         change_separate_class_loader('false')
-        run(['./compile_tests.sh'], cwd='../generation/')
-        makedirs('../generation/coverage_reports')
+        run(['./compile_tests.sh'], cwd='../generation/programs/' + PROGRAM + '/')
+        makedirs('../generation/programs/' + PROGRAM + '/coverage_reports')
         run_tests_coverage()
 
         # Change back, so testing with major is possible
         change_separate_class_loader('true')
-        run(['./compile_tests.sh'], cwd='../generation/')
+        run(['./compile_tests.sh'], cwd='../generation/programs/' + PROGRAM + '/')
         # Fix problem after compile, so major sees the mutants
-        run(['./fix_java_ver_compile_problem.sh'], cwd='../generation/')
+        run(['./fix_java_ver_compile_problem.sh'], cwd='../generation/programs/' + PROGRAM + '/')
 
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)

@@ -17,7 +17,8 @@ from sklearn import preprocessing
 class Attacker:
     """ The Attacker agent"""
     def __init__(self, mode, pick_limit, subset_size):
-        if not path.isdir('../generation/mutants'):
+        if not path.isdir('../generation/programs/' + PROGRAM + '/mutants'):
+            print("!!!!!!!!!!!!!!!")
             self.generate_mutants()
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
@@ -50,12 +51,12 @@ class Attacker:
     @staticmethod
     def generate_mutants():
         """ Generate mutants with context and log files """
-        run(['./' + 'run_mutant_generation.sh'], cwd='../generation/')
+        run(['./' + 'run_mutant_generation.sh'], cwd='../generation/programs/' + PROGRAM + '/')
 
     @staticmethod
     def read_mutants():
         """ Read mutants from file and saves as a list """
-        with open('../generation/mutants.log') as f:
+        with open('../generation/programs/' + PROGRAM + '/mutants.log') as f:
             mutants_list = f.read().splitlines()
 
         return mutants_list
@@ -100,7 +101,7 @@ class Attacker:
 
         :return: OneHotEncoder for mutant features
         """
-        df = pd.read_csv('../generation/mutants.context', sep=',')
+        df = pd.read_csv('../generation/programs/' + PROGRAM + '/mutants.context', sep=',')
         cat1 = df.mutationOperatorGroup.unique()
         cat2 = df.mutationOperator.unique()
         cat3 = df.nodeTypeBasic.unique()
@@ -125,7 +126,7 @@ class Attacker:
         :param mutant_nrs: list of mutant ids to transform into features
         :return: a feature vector
         """
-        df = pd.read_csv('../generation/mutants.context', sep=',')
+        df = pd.read_csv('../generation/programs/' + PROGRAM + '/mutants.context', sep=',')
         df = df.fillna(0)
         feature_list = list()
         features = list()
