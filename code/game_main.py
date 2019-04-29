@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import perf_counter
 from csv import DictWriter
+from shutil import copyfile
 
 # Import classes
 from classes.attacker import Attacker
@@ -348,6 +349,17 @@ def main():
         attacker.save_bandit(OUTPUT_RUN_DIR)
 
 
+def create_testing_files():
+    """ Create testing folder with compiled src file using java 8 for compatibility reasons """
+    p_path = '../generation/programs/' + PROGRAM
+    t_path = p_path + '/testing/' + PROGRAM
+
+    if not path.exists(t_path):
+        makedirs(t_path)
+        copyfile(p_path + '/src/' + SRC_FILE_NAME + '.java', t_path + '/' + SRC_FILE_NAME + '.java')
+        run(['./' + 'compile_src_file_j8.sh', PROGRAM, SRC_FILE_NAME], cwd='../generation/')
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--iterations', type=int, default=GAME_ITERATIONS)
@@ -359,6 +371,7 @@ if __name__ == "__main__":
     parser.add_argument('--defender_mode', type=str, default=DEFENDER_MODE)
     parser.add_argument('--bandit_algorithm', type=str, default=BANDIT_ALGORITHM)
     parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
+    parser.add_argument('--program', type=str, default=PROGRAM)
     args = parser.parse_args()
 
     GAME_ITERATIONS = args.iterations
@@ -372,13 +385,16 @@ if __name__ == "__main__":
     OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.1f_wt:%.1f_am:%s_dm:%s_ba:%s' \
         % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
            ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
+    PROGRAM = args.program
 
     MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
     MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 
-    defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
-    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
-    #
-    # # print(environ['PATH'])
-    #
-    main()
+    create_testing_files()
+
+    # defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
+    # attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+    # #
+    # # # print(environ['PATH'])
+    # #
+    # main()
