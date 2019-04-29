@@ -159,8 +159,8 @@ def plot_results(display, save):
     ax.grid(axis='y')
 
     if save:
-        fig.savefig('output/' + OUTPUT_RUN_DIR + '/Mutants.png')
-        fig2.savefig('output/' + OUTPUT_RUN_DIR + '/Tests.png')
+        fig.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Mutants.png')
+        fig2.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Tests.png')
     if display:
         plt.show()
 
@@ -175,7 +175,7 @@ def plot_results(display, save):
     ax.grid()
 
     if save:
-        fig3.savefig('output/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
+        fig3.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
     if display:
         plt.show()
 
@@ -199,7 +199,7 @@ def save_log_file(x, elapsed_time, writer, log_line_dic):
 
 def save_mutants_file():
     """ Produce mutants file with information about them """
-    with open('output/' + OUTPUT_RUN_DIR + '/mutants_info.csv', 'w') as mi:
+    with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/mutants_info.csv', 'w') as mi:
         line_header = ['Mutant Number', 'Score', 'Times Killed', 'Times Survived', 'Times in a Subset',
                        'Times selected by Agent']
         line_dic = dict((key, '') for key in line_header)
@@ -217,7 +217,7 @@ def save_mutants_file():
 
 def save_tests_file():
     """ Produce tests file with information about them """
-    with open('output/' + OUTPUT_RUN_DIR + '/tests_info.csv', 'w') as ti:
+    with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/tests_info.csv', 'w') as ti:
         line_header = ['Test Name', 'Score', 'Times Killed', 'Times in a Subset', 'Times selected by Agent']
         line_dic = dict((key, '') for key in line_header)
         ti_writer = DictWriter(ti, fieldnames=line_header)
@@ -243,10 +243,10 @@ def main():
         attacker.encoder = attacker.features_encoder()
 
     # Create output directory if it does not exist
-    if not path.exists('output'):
-        makedirs('output')
-    if not path.exists('output/' + OUTPUT_RUN_DIR):
-        makedirs('output/' + OUTPUT_RUN_DIR)
+    if not path.exists('output/' + PROGRAM):
+        makedirs('output/' + PROGRAM)
+    if not path.exists('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR):
+        makedirs('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR)
 
     # Generate coverage map for filtering before the game starts
     cm_path = '../generation/programs/' + PROGRAM + '/covMap-' + defender.tests_folder_name + '.csv'
@@ -278,7 +278,7 @@ def main():
     cov_map = cov_map_dic(cm_path)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
-    with open('output/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
+    with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
         log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Mutants Survived', 'Mutants Killed', 'Round Time']
         log_line_dic = dict((key, '') for key in log_line_header)
         gl_writer = DictWriter(gl, fieldnames=log_line_header)
@@ -392,9 +392,9 @@ if __name__ == "__main__":
 
     create_testing_files()
 
-    # defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
-    # attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
-    # #
-    # # # print(environ['PATH'])
-    # #
-    # main()
+    defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
+    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+    #
+    # # print(environ['PATH'])
+    #
+    main()
