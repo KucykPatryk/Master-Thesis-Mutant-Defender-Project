@@ -3,8 +3,9 @@
 testclass=$1
 testcase=$2
 nr=$3
+program=$4
 
-ant testCoverage -Dtestclass=$testclass -Dtestcase=$testcase
+ant -Dprogram=$program testCoverage -Dtestclass=$testclass -Dtestcase=$testcase
 
-ant testCoverageReport -Dnr=$nr
+ant -Dprogram=$program testCoverageReport -Dnr=$nr
 

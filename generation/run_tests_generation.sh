@@ -9,9 +9,10 @@ echo
 
 folder_name=$1
 file_name=$2
+program=$3
 
-javac testing/*/*.java
+javac programs/$3/testing/*/*.java
 
-java -jar libs/evosuite-1.0.6.jar -class $1.$2 -projectCP testing/
+java -jar libs/evosuite-1.0.6.jar -class $1.$2 -projectCP programs/$3/testing
 
-ant compile.tests
+ant -Dprogram=$program compile.tests.generation

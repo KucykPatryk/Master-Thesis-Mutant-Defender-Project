@@ -1,6 +1,7 @@
 from subprocess import run
 from .global_variables import *
 from os import path
+import dill
 
 from .mutation_set import MutationSet
 from .mutation_set import MutationSubset
@@ -18,7 +19,6 @@ class Attacker:
     """ The Attacker agent"""
     def __init__(self, mode, pick_limit, subset_size):
         if not path.isdir('../generation/programs/' + PROGRAM + '/mutants'):
-            print("!!!!!!!!!!!!!!!")
             self.generate_mutants()
         self.mutants_list = self.read_mutants()
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
@@ -48,10 +48,17 @@ class Attacker:
 
         return algorithm
 
+    def save_bandit(self):
+        """ Save bandit to a binary file using dill """
+        file = open('attacker_bandit', 'wb')
+        dill.dump(self.bandit, file)
+        file.close()
+
     @staticmethod
     def generate_mutants():
         """ Generate mutants with context and log files """
-        run(['./' + 'run_mutant_generation.sh'], cwd='../generation/programs/' + PROGRAM + '/')
+        run(['./' + 'run_mutant_generation.sh', PROGRAM], cwd='../generation/')
+        move_major_files()
 
     @staticmethod
     def read_mutants():

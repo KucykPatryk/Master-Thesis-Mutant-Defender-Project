@@ -48,9 +48,9 @@ def execute_testing(testing_set, file='./run_tests.sh', cov_parm=''):
     test_case = ','.join(['test' + e for e in testing_set])
 
     if file == './run_test_coverage.sh':
-        run([file, test_class, test_case, cov_parm], cwd='../generation/programs/' + PROGRAM + '/')
+        run([file, test_class, test_case, cov_parm, PROGRAM], cwd='../generation/')
     else:
-        run([file, test_class, test_case], cwd='../generation/programs/' + PROGRAM + '/')
+        run([file, test_class, test_case, PROGRAM], cwd='../generation/')
 
 
 def update_results():
@@ -261,15 +261,17 @@ def main():
     # Make run coverage with JaCoCo possible
     if not path.exists('../generation/programs/' + PROGRAM + '/coverage_reports'):
         change_separate_class_loader('false')
-        run(['./compile_tests.sh'], cwd='../generation/programs/' + PROGRAM + '/')
+        run(['./compile_tests.sh', PROGRAM], cwd='../generation/')
         makedirs('../generation/programs/' + PROGRAM + '/coverage_reports')
         run_tests_coverage()
 
         # Change back, so testing with major is possible
         change_separate_class_loader('true')
-        run(['./compile_tests.sh'], cwd='../generation/programs/' + PROGRAM + '/')
+        run(['./compile_tests.sh', PROGRAM], cwd='../generation/')
         # Fix problem after compile, so major sees the mutants
-        run(['./fix_java_ver_compile_problem.sh'], cwd='../generation/programs/' + PROGRAM + '/')
+        run(['./fix_java_ver_compile_problem.sh', PROGRAM], cwd='../generation/')
+        shutil.move(path.join("../generation/", "mutants.log"),
+                    path.join("../generation/programs/" + PROGRAM + "/", "mutants.log"))
 
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
@@ -354,6 +356,11 @@ def main():
     save_mutants_file()
     save_tests_file()
 
+    # Save bandit models to a file
+    if SAVE_BANDITS:
+        defender.save_bandit()
+        attacker.save_bandit()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -385,7 +392,7 @@ if __name__ == "__main__":
 
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
     attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
-
-    # print(environ['PATH'])
-
+    #
+    # # print(environ['PATH'])
+    #
     main()

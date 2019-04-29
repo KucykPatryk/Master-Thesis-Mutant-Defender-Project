@@ -12,6 +12,7 @@ from sklearn.linear_model import SGDClassifier
 from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateClassifiers, \
     EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
 from copy import deepcopy
+import dill
 
 
 class Defender:
@@ -50,11 +51,18 @@ class Defender:
 
         return algorithm
 
+    def save_bandit(self):
+        """ Save bandit to a binary file using dill """
+        file = open('defender_bandit', 'wb')
+        dill.dump(self.bandit, file)
+        file.close()
+
     @staticmethod
     def generate_tests():
         """ Generate mutants with context and log files """
-        run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME], cwd='../generation/programs/' +
-                                                                                    PROGRAM + '/')
+        run(['./' + 'run_tests_generation.sh', SRC_FOLDER_NAME, SRC_FILE_NAME, PROGRAM],
+            cwd='../generation/')
+        move_evosuite_files()
 
     def read_test_ids(self):
         """ Read test ids from the java file with tests and save it as a list """

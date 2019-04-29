@@ -1,3 +1,5 @@
 #!/bin/sh
 
-ant compile.tests
+program=$1
+
+ant -Dprogram=$program compile.tests

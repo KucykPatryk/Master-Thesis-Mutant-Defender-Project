@@ -1,4 +1,4 @@
-<project name="Triangle" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+<project name="MutantDefender" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
     <!-- ##############################################
           Path to Major and Mutation options
@@ -7,8 +7,11 @@
     <property name="mutOp" value=":NONE"/>
     <property name="mutator" value="-XMutator${mutOp}"/>
     <property name="major" value="../major/bin/javac"/>
+    <property name="program" value="triangle"/>
+    <property name="programdir" value="programs/${program}"/>
     <property name="junit.jar" value="libs/junit-4.12.jar"/>
     <property name="evosuite-rt" value="libs/evosuite-standalone-runtime-1.0.6.jar:libs/hamcrest-core-1.3.jar"/>
+
 
     <presetdef name="javac">
         <javac includeantruntime="false" />
@@ -16,40 +19,57 @@
 
     <!-- Target to clean up -->
     <target name="clean" description="Clean">
-        <delete dir="bin"/>
+        <delete dir="${programdir}/bin"/>
         <delete>
-            <fileset dir="." includes="*.csv"/>
-            <fileset dir="." includes="*.log"/>
+            <fileset dir="${programdir}/" includes="*.csv"/>
+            <fileset dir="${programdir}/" includes="*.log"/>
         </delete>
     </target>
 
     <!-- Target to initialize build -->
     <target name="init">
-        <mkdir dir="bin"/>
+        <mkdir dir="${programdir}/bin"/>
     </target>
 
 
     <!-- Target to compile the project -->
     <target name="compile" depends="init" description="Compile">
-        <javac srcdir="src"
-               destdir="bin"
+        <javac srcdir="${programdir}/src"
+               destdir="${programdir}/bin"
                debug="yes"
 	       fork="yes">
         </javac>
     </target>
 
-    <!-- Target to compile the test suite -->
-    <target name="compile.tests" depends="compile" description="Compile all tests">
-	<delete dir="bin-tests" quiet="true" />
-        <mkdir dir="bin-tests" />
+    <!-- Target to compile the test suite for generation -->
+    <target name="compile.tests.generation" depends="compile" description="Compile all tests">
+	<delete dir="${programdir}/bin-tests" quiet="true" />
+        <mkdir dir="${programdir}/bin-tests" />
         <javac srcdir="evosuite-tests"
-               destdir="bin-tests"
+               destdir="${programdir}/bin-tests"
 	       debug="yes"
 	       deprecation="false"
 	       optimize="false">
 	       <classpath>
-		       <pathelement path="${junit.jar}" />
-			<pathelement path="bin/"/>
+		        <pathelement path="${junit.jar}" />
+			<pathelement path="${programdir}/bin/"/>
+			<pathelement path="${evosuite-rt}"/>
+	       </classpath>
+        </javac>
+    </target>
+
+    <!-- Target to compile the test suite -->
+    <target name="compile.tests" depends="compile" description="Compile all tests">
+	<delete dir="${programdir}/bin-tests" quiet="true" />
+        <mkdir dir="${programdir}/bin-tests" />
+        <javac srcdir="${programdir}/evosuite-tests"
+               destdir="${programdir}/bin-tests"
+	       debug="yes"
+	       deprecation="false"
+	       optimize="false">
+	       <classpath>
+		        <pathelement path="${junit.jar}" />
+			<pathelement path="${programdir}/bin/"/>
 			<pathelement path="${evosuite-rt}"/>
 	       </classpath>
         </javac>
@@ -66,8 +86,8 @@
 	       <classpath>
 		       <pathelement path="${junit.jar}"/>
 		       <pathelement path="${evosuite-rt}"/>
-		       <pathelement path="bin-tests"/>
-		       <pathelement path="bin/"/>
+		       <pathelement path="${programdir}/bin-tests"/>
+		       <pathelement path="${programdir}/bin/"/>
 	       </classpath>
             <batchtest fork="no">
                 <fileset dir="test">
@@ -92,8 +112,8 @@
 	       <classpath>
 		       <pathelement path="${junit.jar}"/>
 		       <pathelement path="${evosuite-rt}"/>
-		       <pathelement path="bin-tests"/>
-		       <pathelement path="bin"/>
+		       <pathelement path="${programdir}/bin-tests"/>
+		       <pathelement path="${programdir}/bin"/>
 	       </classpath>
 	    <test name="${testclass}" methods="${testcase}"/>
         </junit>
@@ -101,8 +121,8 @@
 
     <!-- Target to compile the project -->
     <target name="mutate" depends="init" description="Compile">
-        <javac srcdir="src"
-               destdir="bin"
+        <javac srcdir="${programdir}/src"
+               destdir="${programdir}/bin"
                debug="yes"
                fork="yes"
                executable="${major}">
@@ -110,6 +130,20 @@
             <compilerarg value="${mutator}"/>
             <compilerarg value="-J-Dmajor.export.mutants=true"/>
             <compilerarg value="-J-Dmajor.export.context=true"/>
+        </javac>
+    </target>
+
+    <!-- Target to compile the project FIX -->
+    <target name="mutateFix" depends="init" description="Compile">
+        <javac srcdir="${programdir}/src"
+               destdir="${programdir}/bin"
+               debug="yes"
+               fork="yes"
+               executable="${major}">
+
+            <compilerarg value="${mutator}"/>
+            <compilerarg value="-J-Dmajor.export.mutants=false"/>
+            <compilerarg value="-J-Dmajor.export.context=false"/>
         </javac>
     </target>
 
@@ -123,20 +157,25 @@
                mutationAnalysis="true"
                sort="sort_methods"
                coverage="true"
-               resultFile="results.csv"
-               killDetailsFile="killed.csv"
-	       excludeFile="${major-exclude}"
+               resultFile="${programdir}/results.csv"
+               killDetailsFile="${programdir}/killed.csv"
+	       excludeFile="${programdir}/${major-exclude}"
+	       summaryFile="${programdir}/summary.csv"
+	       covMapFile="${programdir}/covMap.csv"
+	       killMapFile="${programdir}/killMap.csv"
+	       testMapFile="${programdir}/testMap.csv"
+	       mutantsLogFile="${programdir}/mutants.log"
                exportCovMap="true"
                exportKillMap="true">
 
 	       <classpath>
-		       <pathelement path="mutants"/>
+		       <pathelement path="${programdir}/mutants"/>
 		       <pathelement path="${evosuite-rt}"/>
-		       <pathelement path="bin-tests"/>
-		       <pathelement path="bin"/>
+		       <pathelement path="${programdir}/bin-tests"/>
+		       <pathelement path="${programdir}/bin"/>
 	       </classpath>
             <batchtest fork="false">
-                <fileset dir="evosuite-tests">
+                <fileset dir="${programdir}/evosuite-tests">
                     <include name="**/*Test*.java"/>
 		    <!-- Ignore helper classes that do not contain test cases -->
                     <exclude name="**/*_scaffolding.java"/>
@@ -158,17 +197,22 @@
                mutationAnalysis="true"
 	       sort="sort_methods"
 	       coverage="true"
-               resultFile="results.csv"
-               killDetailsFile="killed.csv"
-               excludeFile="${major-exclude}"
+               resultFile="${programdir}/results.csv"
+               killDetailsFile="${programdir}/killed.csv"
+               excludeFile="${programdir}/${major-exclude}"
+	       summaryFile="${programdir}/summary.csv"
+	       covMapFile="${programdir}/covMap.csv"
+	       killMapFile="${programdir}/killMap.csv"
+	       testMapFile="${programdir}/testMap.csv"
+	       mutantsLogFile="${programdir}/mutants.log"
                exportCovMap="true"
                exportKillMap="true">
 
 	       <classpath>
-		       <pathelement path="mutants"/>
+		       <pathelement path="${programdir}/mutants"/>
 		       <pathelement path="${evosuite-rt}"/>
-		       <pathelement path="bin-tests"/>
-		       <pathelement path="bin"/>
+		       <pathelement path="${programdir}/bin-tests"/>
+		       <pathelement path="${programdir}/bin"/>
 	       </classpath>
 	       <test name="${testclass}" methods="${testcase}"/>
         </junit>
@@ -183,7 +227,8 @@
 	<property name="testclass" value="triangle.Triangle_ESTest"/>
 	<property name="testcases" value=""/>
 	<echo message="Running unit tests ..."/>
-	<jacoco:coverage>
+	<jacoco:coverage destfile="${programdir}/jacoco.exec">		
+		
 		<junit printsummary="true"
 		       showoutput="true"
 		       haltonfailure="false"
@@ -193,8 +238,8 @@
 		       <classpath>
 			       <pathelement path="${junit.jar}"/>
 			       <pathelement path="${evosuite-rt}"/>
-			       <pathelement path="bin-tests"/>
-			       <pathelement path="bin"/>
+			       <pathelement path="${programdir}/bin-tests"/>
+			       <pathelement path="${programdir}/bin"/>
 		       </classpath>
 		    <test name="${testclass}" methods="${testcase}"/>
 		</junit>
@@ -209,18 +254,18 @@
 	<property name="nr" value=""/>
 	<jacoco:report>                       
 		<executiondata>
-		    <file file="jacoco.exec"/>
+		    <file file="${programdir}/jacoco.exec"/>
 		</executiondata>
 		                    
 		<structure name="Example Project">
 		    <classfiles>
-		        <fileset dir="bin-tests"/>
+		        <fileset dir="${programdir}/bin-tests"/>
 		    </classfiles>
 		    <sourcefiles encoding="UTF-8">
-		        <fileset dir="src"/>
+		        <fileset dir="${programdir}/src"/>
 		    </sourcefiles>
 		</structure>                           
-		<csv destfile="coverage_reports/coverage_report${nr}"/>                    
+		<csv destfile="${programdir}/coverage_reports/coverage_report${nr}"/>                    
     	</jacoco:report>
         
     </target>
