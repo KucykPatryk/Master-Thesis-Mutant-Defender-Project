@@ -48,9 +48,9 @@ class Attacker:
 
         return algorithm
 
-    def save_bandit(self):
+    def save_bandit(self, folder_run_name):
         """ Save bandit to a binary file using dill """
-        file = open('attacker_bandit', 'wb')
+        file = open('output/' + folder_run_name + '/attacker_bandit', 'wb')
         dill.dump(self.bandit, file)
         file.close()
 

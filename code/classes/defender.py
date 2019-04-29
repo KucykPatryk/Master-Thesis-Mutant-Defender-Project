@@ -51,9 +51,9 @@ class Defender:
 
         return algorithm
 
-    def save_bandit(self):
+    def save_bandit(self, folder_run_name):
         """ Save bandit to a binary file using dill """
-        file = open('defender_bandit', 'wb')
+        file = open('output/' + folder_run_name + '/defender_bandit', 'wb')
         dill.dump(self.bandit, file)
         file.close()
 

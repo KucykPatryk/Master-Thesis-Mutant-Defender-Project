@@ -301,20 +301,6 @@ def main():
             # Set up attacker and defender
             attacker.prepare_for_testing()
 
-            # # Again create filtered subset for tests based on newest subset of mutants
-            # f_tests_sub = list()
-            # i = 0
-            # while True:
-            #     for m in attacker.m_subset.mutants_ids:
-            #         rnd_t = random.choice(f_tests)
-            #         if int(m) in cov_map[test_mapping.index(rnd_t)]:
-            #             f_tests_sub.append(rnd_t)
-            #             i += 1
-            #             if i == MODEL_PICK_LIMIT_T:
-            #                 break
-            #     if i == MODEL_PICK_LIMIT_T:
-            #         break
-
             # Find all tests covering mutants and create subsets for random and pick selection
             f_tests_cov = list()
             for m in attacker.m_subset.mutants_ids:
@@ -358,8 +344,8 @@ def main():
 
     # Save bandit models to a file
     if SAVE_BANDITS:
-        defender.save_bandit()
-        attacker.save_bandit()
+        defender.save_bandit(OUTPUT_RUN_DIR)
+        attacker.save_bandit(OUTPUT_RUN_DIR)
 
 
 if __name__ == "__main__":
