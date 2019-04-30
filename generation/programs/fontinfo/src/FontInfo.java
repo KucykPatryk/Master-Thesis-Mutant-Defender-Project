@@ -1,3 +1,5 @@
+package fontinfo;
+
 import java.awt.Font;
 import java.io.Serializable;
 

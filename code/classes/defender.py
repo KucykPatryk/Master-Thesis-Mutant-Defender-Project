@@ -68,7 +68,7 @@ class Defender:
         """ Generate mutants with context and log files """
         run(['./' + 'run_tests_generation.sh', src_folder_name, src_file_name, self.program],
             cwd='../generation/')
-        move_evosuite_files()
+        move_evosuite_files(self.program)
 
     def read_test_ids(self):
         """ Read test ids from the java file with tests and save it as a list """
