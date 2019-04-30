@@ -7,10 +7,11 @@ from .global_variables import test_map_array
 
 class TestSuite:
     """ Class representing the whole testing suite """
-    def __init__(self, tests, count):
+    def __init__(self, tests, count, program):
         self.tests_ids = tests  # A list of available tests as their name ids
         self.tests_count = count  # Number of all tests
         self.tests = list()  # All tests where the id is equal to index
+        self.program = program  # String of program name
 
         # Fill up the lists with unique tests
         for t in range(self.tests_count):
@@ -42,7 +43,7 @@ class TestSuite:
         :param kill_ratio: kill ratio
         :return: nothing
         """
-        test_map = test_map_array()
+        test_map = test_map_array('../generation/programs/' + self.program + '/testMap-' + self.program + '.csv')
         for i in range(len(ids)):
             self.tests[int(test_map[int(ids[i])]) - 1].update_kills()
             self.tests[int(test_map[int(ids[i])]) - 1].update_score(kill_ratio)
@@ -57,8 +58,8 @@ class TestSuite:
 
 class TestSubset(TestSuite):
     """ Class representing the created subset """
-    def __init__(self, subset_ids, count):
-        super(TestSubset, self).__init__(subset_ids, count)
+    def __init__(self, subset_ids, count, program):
+        super(TestSubset, self).__init__(subset_ids, count, program)
         self.killed = 0  # How many mutants were killed in the opposed subset
 
     def update_killed(self, value):

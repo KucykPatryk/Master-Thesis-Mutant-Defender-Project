@@ -240,7 +240,7 @@ def main():
     """ Main function to run it all """
 
     if attacker.agent_mode != 'random':
-        attacker.encoder = attacker.features_encoder()
+        attacker.encoder = attacker.features_encoder(PROGRAM)
 
     # Create output directory if it does not exist
     if not path.exists('output/' + PROGRAM):
@@ -277,6 +277,11 @@ def main():
     test_mapping = test_map_array(tm_path)
     cov_map = cov_map_dic(cm_path)
 
+    # Read bandits from file
+    if LOAD_BANDITS:
+        defender.load_bandit(OUTPUT_RUN_DIR)
+        attacker.load_bandit(OUTPUT_RUN_DIR)
+
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
         log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Mutants Survived', 'Mutants Killed', 'Round Time']
@@ -300,7 +305,7 @@ def main():
             update_was_in_subset(defender.t_subset.tests_ids, defender)
 
             # Set up attacker and defender
-            attacker.prepare_for_testing()
+            attacker.prepare_for_testing(MODEL_PICK_LIMIT_M, BANDIT_ALGORITHM)
 
             # Find all tests covering mutants and create subsets for random and pick selection
             f_tests_cov = list()
@@ -314,7 +319,7 @@ def main():
             while len(f_tests_sub) > MODEL_PICK_LIMIT_T:
                 f_tests_sub.remove(np.random.choice(f_tests_sub))
 
-            defender.prepare_for_testing(f_tests_sub, f_tests_cov)
+            defender.prepare_for_testing(f_tests_sub, f_tests_cov, MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)
 
             # Execute
             execute_testing(defender.t_subset.tests_ids)
@@ -389,11 +394,13 @@ if __name__ == "__main__":
 
     MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
     MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
+    SRC_FILE_NAME = next(walk('../generation/programs/' + PROGRAM + '/src/'))[2][0][:-5]  # Name without the extension
+    SRC_FOLDER_NAME = SRC_FILE_NAME.lower()
 
     create_testing_files()
 
-    defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE)
-    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE)
+    defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE, PROGRAM, SRC_FOLDER_NAME, SRC_FILE_NAME)
+    attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE, PROGRAM)
     #
     # # print(environ['PATH'])
     #

@@ -14,9 +14,9 @@ ATTACKER_MODE = 'scikit'
 DEFENDER_MODE = 'scikit'
 BANDIT_ALGORITHM = 'EpsilonGreedy'
 OUTPUT_RUN_DIR = 'run0'
-PROGRAM = 'triangle'
+PROGRAM = 'fontinfo'
 SAVE_BANDITS = True
-LOAD_BANDITS = True
+LOAD_BANDITS = False
 
 SHOW_PLOTS = False
 
@@ -24,7 +24,7 @@ SRC_FILE_NAME = next(walk('../generation/programs/' + PROGRAM + '/src/'))[2][0][
 SRC_FOLDER_NAME = SRC_FILE_NAME.lower()
 
 
-def test_map_array(file_path='../generation/programs/' + PROGRAM + '/testMap-triangle.csv'):
+def test_map_array(file_path='../generation/programs/' + PROGRAM + '/testMap-' + PROGRAM + '.csv'):
     """ Returns an array of test ids with their actual method ids
     Array ID is TestNo and Array value is TestName number """
     tests = [0]
@@ -38,15 +38,15 @@ def test_map_array(file_path='../generation/programs/' + PROGRAM + '/testMap-tri
     return tests
 
 
-def move_major_files():
+def move_major_files(program):
     shutil.move(path.join("../generation/", "mutants.log"),
-                path.join("../generation/programs/" + PROGRAM + "/", "mutants.log"))
+                path.join("../generation/programs/" + program + "/", "mutants.log"))
     shutil.move(path.join("../generation/", "mutants.context"),
-                path.join("../generation/programs/" + PROGRAM + "/", "mutants.context"))
+                path.join("../generation/programs/" + program + "/", "mutants.context"))
     shutil.move(path.join("../generation/mutants"),
-                path.join("../generation/programs/" + PROGRAM + "/"))
+                path.join("../generation/programs/" + program + "/"))
 
 
-def move_evosuite_files():
-    shutil.move("../generation/evosuite-tests", "../generation/programs/" + PROGRAM + "/")
-    shutil.move("../generation/evosuite-report", "../generation/programs/" + PROGRAM + "/")
+def move_evosuite_files(program):
+    shutil.move("../generation/evosuite-tests", "../generation/programs/" + program + "/")
+    shutil.move("../generation/evosuite-report", "../generation/programs/" + program + "/")

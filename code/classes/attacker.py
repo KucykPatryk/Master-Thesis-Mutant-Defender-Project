@@ -1,8 +1,8 @@
 from subprocess import run
-from .global_variables import *
 from os import path
 import dill
 
+from .global_variables import move_major_files
 from .mutation_set import MutationSet
 from .mutation_set import MutationSubset
 from sklearn.linear_model import SGDClassifier
@@ -17,11 +17,12 @@ from sklearn import preprocessing
 
 class Attacker:
     """ The Attacker agent"""
-    def __init__(self, mode, pick_limit, subset_size):
-        if not path.isdir('../generation/programs/' + PROGRAM + '/mutants'):
+    def __init__(self, mode, pick_limit, subset_size, program):
+        self.program = program  # String of program name
+        if not path.isdir('../generation/programs/' + program + '/mutants'):
             self.generate_mutants()
-        self.mutants_list = self.read_mutants()
-        self.m_set = MutationSet(self.mutants_list, len(self.mutants_list))
+        self.mutants_list = self.read_mutants(program)
+        self.m_set = MutationSet(self.mutants_list, len(self.mutants_list), program)
         self.m_subset = self.new_subset(self.m_set, subset_size)
         self.won = 0  # Times won against defender
         self.lost = 0  # Times lost against defender
@@ -33,13 +34,13 @@ class Attacker:
         # This variable decides the agent mode. Currently "random" is supported
         self.agent_mode = mode
 
-    def create_bandit(self, num_features):
+    def create_bandit(self, num_features, bandit_algorithm):
         """ Create and return a bandit algorithm object based on logistic regression
         :return: Bandit algorithm object
         """
         base_algorithm = SGDClassifier(random_state=123)
         n_choices = 2
-        algorithm = self.bandit_algorithm(BANDIT_ALGORITHM, base_algorithm, n_choices)
+        algorithm = self.bandit_algorithm(bandit_algorithm, base_algorithm, n_choices)
 
         # Initial fit
         X = np.zeros((1, num_features))
@@ -50,32 +51,37 @@ class Attacker:
 
     def save_bandit(self, folder_run_name):
         """ Save bandit to a binary file using dill """
-        file = open('output/' + PROGRAM + '/' + folder_run_name + '/attacker_bandit', 'wb')
+        file = open('output/' + self.program + '/' + folder_run_name + '/attacker_bandit', 'wb')
         dill.dump(self.bandit, file)
         file.close()
 
-    @staticmethod
-    def generate_mutants():
+    def load_bandit(self, folder_run_name):
+        """ Load bandit from a binary file using dill """
+        file = open('output/' + self.program + '/' + folder_run_name + '/attacker_bandit', 'rb')
+        self.bandit = dill.load(file)
+        file.close()
+
+    def generate_mutants(self):
         """ Generate mutants with context and log files """
-        run(['./' + 'run_mutant_generation.sh', PROGRAM], cwd='../generation/')
-        move_major_files()
+        run(['./' + 'run_mutant_generation.sh', self.program], cwd='../generation/')
+        move_major_files(self.program)
 
     @staticmethod
-    def read_mutants():
+    def read_mutants(program):
         """ Read mutants from file and saves as a list """
-        with open('../generation/programs/' + PROGRAM + '/mutants.log') as f:
+        with open('../generation/programs/' + program + '/mutants.log') as f:
             mutants_list = f.read().splitlines()
 
         return mutants_list
 
     def new_subset(self, set, size):
         m_subset = MutationSubset(set.create_random_subset(size),
-                                  len(self.mutants_list), size)
+                                  len(self.mutants_list), size, self.program)
         return m_subset
 
     def new_selected_subset(self, set, size, ids):
         m_subset = MutationSubset(set.create_subset(ids, size),
-                                  len(self.mutants_list), size)
+                                  len(self.mutants_list), size, self.program)
         return m_subset
 
     def win(self):
@@ -103,12 +109,12 @@ class Attacker:
         self.m_set.update_wis(subset_ids)
 
     @staticmethod
-    def features_encoder():
+    def features_encoder(program):
         """Encode mutant features with HotOneEncoder from mutant.context file
 
         :return: OneHotEncoder for mutant features
         """
-        df = pd.read_csv('../generation/programs/' + PROGRAM + '/mutants.context', sep=',')
+        df = pd.read_csv('../generation/programs/' + program + '/mutants.context', sep=',')
         cat1 = df.mutationOperatorGroup.unique()
         cat2 = df.mutationOperator.unique()
         cat3 = df.nodeTypeBasic.unique()
@@ -133,7 +139,7 @@ class Attacker:
         :param mutant_nrs: list of mutant ids to transform into features
         :return: a feature vector
         """
-        df = pd.read_csv('../generation/programs/' + PROGRAM + '/mutants.context', sep=',')
+        df = pd.read_csv('../generation/programs/' + self.program + '/mutants.context', sep=',')
         df = df.fillna(0)
         feature_list = list()
         features = list()
@@ -168,14 +174,14 @@ class Attacker:
 
         return algorithm
 
-    def prepare_for_testing(self):
+    def prepare_for_testing(self, model_pick_limit_m, bandit_algorithm):
         """ Prepare agent for the execution """
         if self.agent_mode == 'scikit':
             # Mutant features
             features = self.encode_features(self.m_subset.mutants_ids)
 
             if not self.bandit:
-                self.bandit = self.create_bandit(features.shape[1])
+                self.bandit = self.create_bandit(features.shape[1], bandit_algorithm)
 
             # Prediction
             pred = self.bandit.decision_function(features)
@@ -187,7 +193,7 @@ class Attacker:
             pred.T[1] /= sum
 
             # Model selects the mutants
-            ids = np.random.choice(self.m_subset.mutants_ids, MODEL_PICK_LIMIT_M, p=pred.T[0], replace=False)
+            ids = np.random.choice(self.m_subset.mutants_ids, model_pick_limit_m, p=pred.T[0], replace=False)
 
             # Create new subset
             self.m_subset = self.new_selected_subset(self.m_subset, self.pick_limit, ids.tolist())

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python game_main.py --iterations 1000 --mutants_subset_size 10 --tests_subset_size 10 --model_pick_limit_multiplier 0.3 --winning_threshold 0.5 --output_run_dir rlrun1 --attacker_mode scikit --defender_mode scikit --bandit_algorithm EpsilonGreedy
+python game_main.py --iterations 1000 --mutants_subset_size 10 --tests_subset_size 10 --model_pick_limit_multiplier 0.3 --winning_threshold 0.5 --output_run_dir rlrun1 --attacker_mode scikit --defender_mode scikit --bandit_algorithm EpsilonGreedy --program triangle
 
 #python game_main.py --iterations 1000 --mutants_subset_size 5 --tests_subset_size 10 --model_pick_limit_multiplier 0.3 --#winning_threshold 0.5 --output_run_dir 'run2'
 

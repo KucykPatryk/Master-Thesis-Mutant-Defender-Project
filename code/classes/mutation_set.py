@@ -2,16 +2,15 @@ import random
 
 from .mutant import Mutant
 
-from .global_variables import *
-
 
 class MutationSet:
     """ Class representing the whole mutation set """
-    def __init__(self, mutants, count):
+    def __init__(self, mutants, count, program):
         self.mutants_list = mutants  # A list of available mutants and their properties
         self.mutants_ids = [x[:x.index(':')] for x in self.mutants_list]
         self.mutants_count = count  # Number of all mutants
         self.mutants = list()  # All mutants where the id is index + 1
+        self.program = program  # String of program name
 
         # Fill up the lists with unique mutants
         for m in range(self.mutants_count):
@@ -59,10 +58,10 @@ class MutationSet:
 
 class MutationSubset(MutationSet):
     """ Class representing the created subset """
-    def __init__(self, mutants_subset, count, size):
-        super(MutationSubset, self).__init__(mutants_subset, count)
+    def __init__(self, mutants_subset, count, size, program):
+        super(MutationSubset, self).__init__(mutants_subset, count, program)
         self.excluded_sorted_ids = self.excluded_mutant_ids(size)
-        self.create_exclude_ids_file()
+        self.create_exclude_ids_file(self.program)
         self.survived = 0  # How many mutants survived
         self.killed = 0  # How many were killed
 
@@ -78,9 +77,9 @@ class MutationSubset(MutationSet):
 
         return sorted_ids
 
-    def create_exclude_ids_file(self):
+    def create_exclude_ids_file(self, program):
         """ Create a file with only ids of the not in the subset (eg. for the exclude mutants file) """
-        with open('../generation/programs/' + PROGRAM + '/exclude_mutants.txt', 'w') as ef:
+        with open('../generation/programs/' + program + '/exclude_mutants.txt', 'w') as ef:
             ef.writelines('%s\n' % l for l in self.excluded_sorted_ids)
 
     def update_survived_killed(self, s, k):
