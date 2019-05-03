@@ -22,8 +22,9 @@ class Defender:
         if not path.isdir('../generation/programs/' + program + '/evosuite-tests'):
             self.generate_tests(src_folder_name, src_file_name)
         self.tests_folder_name = next(walk('../generation/programs/' + program + '/evosuite-tests/'))[1][0]
-        self.tests_file_name = next(walk('../generation/programs/' + program + '/evosuite-tests/' +
-                                         self.tests_folder_name))[2][0]
+        self.tests_file_name = src_file_name + '_ESTest.java'
+        # self.tests_file_name = next(walk('../generation/programs/' + program + '/evosuite-tests/' +
+        #                                  self.tests_folder_name))[2][0]
         self.tests_ids = self.read_test_ids()
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids), program)
         self.t_subset = self.new_subset(self.t_suite.create_random_subset(subset_size))

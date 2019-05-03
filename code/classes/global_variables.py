@@ -33,7 +33,7 @@ def test_map_array(file_path='../generation/programs/' + PROGRAM + '/testMap-' +
         tm.readline()
         for line in tm:
             line = line.split(',')
-            tests.append(line[1][29:-2])
+            tests.append(line[1][-4:-2])
 
     return tests
 
