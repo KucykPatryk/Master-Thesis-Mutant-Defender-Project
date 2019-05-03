@@ -4,7 +4,7 @@ from os import path, walk
 from .test_suite import TestSuite
 from .test_suite import TestSubset
 
-from .global_variables import move_evosuite_files
+from .global_variables import move_evosuite_files, LOAD_BANDITS
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -53,11 +53,22 @@ class Defender:
 
         return algorithm
 
-    def save_bandit(self, folder_run_name):
-        """ Save bandit to a binary file using dill """
+    def save_bandit(self, folder_run_name, based_on, load_bandits):
+        """ Save bandit to a binary file using dill
+        :param folder_run_name: Folder name in which it is saved
+        :param based_on: dir to the loaded bandit for this run
+        :return:
+        """
         file = open('output/' + self.program + '/' + folder_run_name + '/defender_bandit', 'wb')
         dill.dump(self.bandit, file)
         file.close()
+        #  Write to log file last the loaded bandit file
+        if not load_bandits:
+            based_on = 'none'
+            with open('output/' + self.program + '/' + folder_run_name + '/loaded_bandits', 'w') as lb:
+                lb.write(based_on + '-ATTACKER\n')
+        with open('output/' + self.program + '/' + folder_run_name + '/loaded_bandits', 'a') as lb:
+            lb.write(based_on + '-DEFENDER\n')
 
     def load_bandit(self, b_dir):
         """ Load bandit from a binary file using dill """

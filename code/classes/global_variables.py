@@ -16,7 +16,7 @@ BANDIT_ALGORITHM = 'EpsilonGreedy'
 OUTPUT_RUN_DIR = 'run0'
 PROGRAM = 'triangle'
 SAVE_BANDITS = True
-LOAD_BANDITS = True
+LOAD_BANDITS = False
 
 SHOW_PLOTS = False
 

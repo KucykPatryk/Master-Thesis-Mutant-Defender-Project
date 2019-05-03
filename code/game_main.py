@@ -352,8 +352,8 @@ def main():
 
     # Save bandit models to a file
     if SAVE_BANDITS:
-        defender.save_bandit(OUTPUT_RUN_DIR)
-        attacker.save_bandit(OUTPUT_RUN_DIR)
+        defender.save_bandit(OUTPUT_RUN_DIR, BANDIT_LOAD_DIR, LOAD_BANDITS)
+        attacker.save_bandit(OUTPUT_RUN_DIR, BANDIT_LOAD_DIR, LOAD_BANDITS)
 
 
 def create_testing_files():
@@ -379,6 +379,8 @@ if __name__ == "__main__":
     parser.add_argument('--bandit_algorithm', type=str, default=BANDIT_ALGORITHM)
     parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
     parser.add_argument('--program', type=str, default=PROGRAM)
+    parser.add_argument('--save_bandits', type=str, default=SAVE_BANDITS)
+    parser.add_argument('--load_bandits', type=str, default=LOAD_BANDITS)
     parser.add_argument('--bandit_load_dir', type=str)
     args = parser.parse_args()
 
@@ -394,6 +396,8 @@ if __name__ == "__main__":
         % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
            ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
     PROGRAM = args.program
+    SAVE_BANDITS = True if args.save_bandits in 'True' else False
+    LOAD_BANDITS = True if args.load_bandits in 'True' else False
     BANDIT_LOAD_DIR = args.bandit_load_dir or PROGRAM + '/' + OUTPUT_RUN_DIR  # Example:
     # 'triangle/run0_gis:3_mss:10_tss:10_mplm:0.3_wt:0.5_am:scikit_dm:scikit_ba:EpsilonGreedy'
 
@@ -406,7 +410,5 @@ if __name__ == "__main__":
 
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE, PROGRAM, SRC_FOLDER_NAME, SRC_FILE_NAME)
     attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE, PROGRAM)
-    #
-    # # print(environ['PATH'])
-    #
+
     main()
