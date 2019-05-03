@@ -281,8 +281,8 @@ def main():
 
     # Read bandits from file
     if LOAD_BANDITS:
-        defender.load_bandit(OUTPUT_RUN_DIR)
-        attacker.load_bandit(OUTPUT_RUN_DIR)
+        defender.load_bandit(BANDIT_LOAD_DIR)
+        attacker.load_bandit(BANDIT_LOAD_DIR)
 
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
@@ -379,6 +379,7 @@ if __name__ == "__main__":
     parser.add_argument('--bandit_algorithm', type=str, default=BANDIT_ALGORITHM)
     parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
     parser.add_argument('--program', type=str, default=PROGRAM)
+    parser.add_argument('--bandit_load_dir', type=str)
     args = parser.parse_args()
 
     GAME_ITERATIONS = args.iterations
@@ -393,6 +394,8 @@ if __name__ == "__main__":
         % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
            ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
     PROGRAM = args.program
+    BANDIT_LOAD_DIR = args.bandit_load_dir or PROGRAM + '/' + OUTPUT_RUN_DIR  # Example:
+    # 'triangle/run0_gis:3_mss:10_tss:10_mplm:0.3_wt:0.5_am:scikit_dm:scikit_ba:EpsilonGreedy'
 
     MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
     MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)

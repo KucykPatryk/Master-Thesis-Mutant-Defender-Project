@@ -59,9 +59,9 @@ class Defender:
         dill.dump(self.bandit, file)
         file.close()
 
-    def load_bandit(self, folder_run_name):
+    def load_bandit(self, b_dir):
         """ Load bandit from a binary file using dill """
-        file = open('output/' + self.program + '/' + folder_run_name + '/defender_bandit', 'rb')
+        file = open('output/' + b_dir + '/defender_bandit', 'rb')
         self.bandit = dill.load(file)
         file.close()
 
