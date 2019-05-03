@@ -122,6 +122,8 @@ def filter_tests(cov_map, test_mapping, size):
     i = 0
     while True:
         for key in filtered_t_dic:
+            if not filtered_t_dic[key]:
+                continue
             choice = random.choice(filtered_t_dic[key])
             filtered_t_ids.append(choice)
             i += 1

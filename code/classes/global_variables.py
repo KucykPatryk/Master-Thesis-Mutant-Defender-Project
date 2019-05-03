@@ -2,7 +2,7 @@ from os import walk, path
 import math
 import shutil
 
-GAME_ITERATIONS = 2
+GAME_ITERATIONS = 3
 
 MUTANTS_SUBSET_SIZE = 10
 TESTS_SUBSET_SIZE = 10
@@ -10,11 +10,11 @@ MODEL_PICK_LIMIT_MULTIPLIER = 0.3
 MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 WINNING_THRESHOLD = 0.5  # Percentage for winning by killing mutants
-ATTACKER_MODE = 'random'
-DEFENDER_MODE = 'random'
+ATTACKER_MODE = 'random'  # random or scikit
+DEFENDER_MODE = 'random'  # random or scikit
 BANDIT_ALGORITHM = 'EpsilonGreedy'
 OUTPUT_RUN_DIR = 'run0'
-PROGRAM = 'fontinfo'
+PROGRAM = 'inflection'
 SAVE_BANDITS = True
 LOAD_BANDITS = False
 

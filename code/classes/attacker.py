@@ -118,6 +118,8 @@ class Attacker:
         cat1 = df.mutationOperatorGroup.unique()
         cat2 = df.mutationOperator.unique()
         cat3 = df.nodeTypeBasic.unique()
+        cat3 = [x for x in cat3 if str(x) != 'nan']
+        cat3 = np.asarray(cat3)
         cat4 = df.parentContextDetailed.unique()
         cat5 = df.parentStmtContextDetailed.unique()
         cat6 = df.hasVariableChild.unique()
