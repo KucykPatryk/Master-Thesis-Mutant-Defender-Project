@@ -66,7 +66,7 @@ class Defender:
         if not load_bandits:
             based_on = 'none'
             with open('output/' + self.program + '/' + folder_run_name + '/loaded_bandits', 'w') as lb:
-                lb.write(based_on + '-ATTACKER\n')
+                lb.write(based_on + '-DEFENDER\n')
         with open('output/' + self.program + '/' + folder_run_name + '/loaded_bandits', 'a') as lb:
             lb.write(based_on + '-DEFENDER\n')
 
@@ -134,8 +134,9 @@ class Defender:
         for nr in test_nrs:
             df = pd.read_csv('../generation/programs/' + self.program + '/coverage_reports/coverage_report' +
                              nr, sep=',', dtype='category')
+            row_idx = 1 if df['CLASS'][0].endswith('scaffolding') else 0
             for e in df.columns[3:]:
-                v.append(float(df[e][0]))
+                v.append(float(df[e][row_idx]))
             v.append((float(self.t_suite.tests[int(nr)].killed_times)))
             v.append((float(self.t_suite.tests[int(nr)].selected)))
             a = np.append(a, [v], axis=0)

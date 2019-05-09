@@ -379,8 +379,8 @@ if __name__ == "__main__":
     parser.add_argument('--bandit_algorithm', type=str, default=BANDIT_ALGORITHM)
     parser.add_argument('--output_run_dir', type=str, default=OUTPUT_RUN_DIR)
     parser.add_argument('--program', type=str, default=PROGRAM)
-    parser.add_argument('--save_bandits', type=str, default=SAVE_BANDITS)
-    parser.add_argument('--load_bandits', type=str, default=LOAD_BANDITS)
+    parser.add_argument('--save_bandits', action="store_true", default=SAVE_BANDITS)
+    parser.add_argument('--load_bandits', action="store_true", default=LOAD_BANDITS)
     parser.add_argument('--bandit_load_dir', type=str)
     args = parser.parse_args()
 
@@ -396,8 +396,10 @@ if __name__ == "__main__":
         % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
            ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
     PROGRAM = args.program
-    SAVE_BANDITS = True if args.save_bandits in 'True' else False
-    LOAD_BANDITS = True if args.load_bandits in 'True' else False
+    SAVE_BANDITS = args.save_bandits
+    LOAD_BANDITS = args.load_bandits
+    # SAVE_BANDITS = True if args.save_bandits in 'True' else False
+    # LOAD_BANDITS = True if args.load_bandits in 'True' else False
     BANDIT_LOAD_DIR = args.bandit_load_dir or PROGRAM + '/' + OUTPUT_RUN_DIR  # Example:
     # 'triangle/run0_gis:3_mss:10_tss:10_mplm:0.3_wt:0.5_am:scikit_dm:scikit_ba:EpsilonGreedy'
 
