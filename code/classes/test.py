@@ -4,7 +4,7 @@ from .score import Score
 class Test:
     """ Class representing a test unit """
     def __init__(self, id, score):
-        self.id = id
+        self.id = id  # Test Name ids
         self.score = Score(score)
         self.killed_times = 0  # How many times this test killed mutants
         self.subset_chosen_times = 0  # How many times it was in a subset

@@ -15,7 +15,7 @@ class TestSuite:
 
         # Fill up the lists with unique tests
         for t in range(self.tests_count):
-            self.tests.append(Test(t + 1, 0))
+            self.tests.append(Test(t, 0))
 
     @staticmethod
     def create_subset(ids_list, size):
@@ -43,17 +43,19 @@ class TestSuite:
         :param kill_ratio: kill ratio
         :return: nothing
         """
-        test_map = test_map_array('../generation/programs/' + self.program + '/testMap-' + self.program + '.csv')
+        # test_map = test_map_array('../generation/programs/' + self.program + '/testMap-' + self.program + '.csv')
+        kill_map_ids = [int(subset_ids[int(n) - 1]) for n in ids]
+
         for i in range(len(ids)):
-            self.tests[int(test_map[int(ids[i])]) - 1].update_kills()
-            self.tests[int(test_map[int(ids[i])]) - 1].update_score(kill_ratio)
+            self.tests[kill_map_ids[i]].update_kills()
+            self.tests[kill_map_ids[i]].update_score(kill_ratio)
         for t in subset_ids:
-            self.tests[int(t) - 1].update_selected()
+            self.tests[int(t)].update_selected()
 
     def update_wis(self, subset_ids):
         """ Update was in subset count """
-        for x in subset_ids:
-            self.tests[int(x) - 1].update_subset_chosen()
+        for t in subset_ids:
+            self.tests[int(t)].update_subset_chosen()
 
 
 class TestSubset(TestSuite):

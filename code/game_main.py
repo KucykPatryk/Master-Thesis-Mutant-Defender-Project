@@ -144,7 +144,7 @@ def plot_results(display, save):
     # Plot score for mutants and tests
     x = np.arange(1, attacker.m_set.mutants_count + 1, 1)
     m = [m.score.points for m in attacker.m_set.mutants]
-    x2 = np.arange(1, defender.t_suite.tests_count + 1, 1)
+    x2 = np.arange(0, defender.t_suite.tests_count, 1)
     t = [t.score.points for t in defender.t_suite.tests]
 
     fig, ax = plt.subplots()
@@ -225,7 +225,7 @@ def save_tests_file():
         ti_writer = DictWriter(ti, fieldnames=line_header)
         ti_writer.writeheader()
         for t in defender.t_suite.tests:
-            line_dic['Test Name'] = 'test' + str((t.id - 1))
+            line_dic['Test Name'] = 'test' + str(t.id)
             line_dic['Score'] = '%.3f' % t.score.points
             line_dic['Times Killed'] = t.killed_times
             line_dic['Times in a Subset'] = t.subset_chosen_times
@@ -302,6 +302,7 @@ def main():
 
             # Create filtered subset for tests
             f_tests = filter_tests(cov_map, test_mapping, TESTS_SUBSET_SIZE)
+            # f_tests = ['08', '09', '20']
             # print(attacker.m_subset.mutants_ids)
             defender.t_subset = defender.new_subset(defender.t_suite.create_subset(f_tests, TESTS_SUBSET_SIZE))
             update_was_in_subset(defender.t_subset.tests_ids, defender)
@@ -331,9 +332,9 @@ def main():
 
             # Learn the models
             if x < GAME_ITERATIONS - 1:
-                if attacker.agent_mode is not 'random':
+                if attacker.agent_mode != 'random':
                     attacker.learn()
-                if defender.agent_mode is not 'random':
+                if defender.agent_mode != 'random':
                     defender.learn()
             time_stop = perf_counter()
             elapsed_time = time_stop - time_start  # In seconds
@@ -392,7 +393,7 @@ if __name__ == "__main__":
     ATTACKER_MODE = args.attacker_mode
     DEFENDER_MODE = args.defender_mode
     BANDIT_ALGORITHM = args.bandit_algorithm
-    OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.1f_wt:%.1f_am:%s_dm:%s_ba:%s' \
+    OUTPUT_RUN_DIR = args.output_run_dir + '_gis:%d_mss:%d_tss:%d_mplm:%.2f_wt:%.2f_am:%s_dm:%s_ba:%s' \
         % (GAME_ITERATIONS, MUTANTS_SUBSET_SIZE, TESTS_SUBSET_SIZE, MODEL_PICK_LIMIT_MULTIPLIER, WINNING_THRESHOLD,
            ATTACKER_MODE, DEFENDER_MODE, BANDIT_ALGORITHM)
     PROGRAM = args.program
