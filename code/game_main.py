@@ -399,6 +399,7 @@ if __name__ == "__main__":
     PROGRAM = args.program
     SAVE_BANDITS = args.save_bandits
     LOAD_BANDITS = args.load_bandits
+
     # SAVE_BANDITS = True if args.save_bandits in 'True' else False
     # LOAD_BANDITS = True if args.load_bandits in 'True' else False
     BANDIT_LOAD_DIR = args.bandit_load_dir or PROGRAM + '/' + OUTPUT_RUN_DIR  # Example:
