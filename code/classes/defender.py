@@ -181,7 +181,10 @@ class Defender:
             pred.T[1] /= sum
 
             # Model selects the tests
-            ids = np.random.choice(f_tests_cov, model_pick_limit_t, p=pred.T[0], replace=False)
+            if model_pick_limit_t < len(f_tests_cov):
+                ids = np.random.choice(f_tests_cov, model_pick_limit_t, p=pred.T[0], replace=False)
+            else:
+                ids = np.random.choice(f_tests_cov, len(f_tests_cov), p=pred.T[0], replace=False)
 
             # Create new subset
             self.t_subset = self.new_subset(self.t_subset.create_subset(ids, self.pick_limit))

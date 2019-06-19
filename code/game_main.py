@@ -7,6 +7,8 @@ import numpy as np
 from time import perf_counter
 from csv import DictWriter
 from shutil import copyfile
+from scipy.interpolate import spline
+import dill
 
 # Import classes
 from classes.attacker import Attacker
@@ -136,10 +138,11 @@ def filter_tests(cov_map, test_mapping, size):
     for i in range(size):
         filtered_t_ids[i] = test_mapping[filtered_t_ids[i]]
 
-    return filtered_t_ids
+    # return filtered_t_ids
+    return list(set(filtered_t_ids))
 
 
-def plot_results(display, save):
+def plot_results(display, save, e_m, e_t):
     """ Plot results, and display, or save them as png files"""
     # Plot score for mutants and tests
     x = np.arange(1, attacker.m_set.mutants_count + 1, 1)
@@ -180,6 +183,41 @@ def plot_results(display, save):
         fig3.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
     if display:
         plt.show()
+
+    # Plot mutants' and tests' exploration graph
+    x = np.arange(0, len(e_m), 1)
+    y = e_m
+
+    fig4, ax = plt.subplots()
+    ax.set(xlabel='Round', ylabel='Mutants Explored',
+           title='Visualisation of mutants explored before selection per round')
+    ax.set_ylim(0, len(attacker.mutants_list))
+
+    x_new = np.linspace(x.min(), x.max())
+    y_smooth = spline(x, y, x_new)
+    ax.plot(x_new, y_smooth)
+    ax.grid()
+
+    # For tests
+    x = np.arange(0, len(e_t), 1)
+    y = e_t
+
+    fig5, ax = plt.subplots()
+    ax.set(xlabel='Round', ylabel='Tests Explored',
+           title='Visualisation of tests explored before selection per round')
+    ax.set_ylim(0, len(defender.tests_ids))
+
+    x_new = np.linspace(x.min(), x.max())
+    y_smooth = spline(x, y, x_new)
+    ax.plot(x_new, y_smooth)
+    ax.grid()
+
+    if save:
+        fig4.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Mutants_explored.png')
+        fig5.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Tests_explored.png')
+    if display:
+        plt.show()
+
 
 
 def update_was_in_subset(subset_ids, agent):
@@ -284,6 +322,11 @@ def main():
         defender.load_bandit(BANDIT_LOAD_DIR)
         attacker.load_bandit(BANDIT_LOAD_DIR)
 
+    exploration_mutants = set()  # Mutants discovered
+    exploration_tests = set()  # Tests discovered
+    exploration_mutants_l = [0]  # Total mutants discovered per round where index + 1 is the round number
+    exploration_tests_l = [0]  # Total tests discovered per round where index + 1 is the round number
+
     ''' !-!-!-!-!-!-!-!-!-! Game is running !-!-!-!-!-!-!-!-!-! '''
     with open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/game_info_log.csv', 'w') as gl:  # For log round writing
         log_line_header = ['Round', 'Winner', 'Loser', 'Kill Ratio', 'Mutants Survived', 'Mutants Killed', 'Round Time']
@@ -307,6 +350,12 @@ def main():
             defender.t_subset = defender.new_subset(defender.t_suite.create_subset(f_tests, TESTS_SUBSET_SIZE))
             update_was_in_subset(defender.t_subset.tests_ids, defender)
 
+            # Keep count of new mutants and tests that were selected in the first selection
+            exploration_mutants.update(attacker.m_subset.mutants_ids)
+            exploration_mutants_l.append(len(exploration_mutants))
+            exploration_tests.update(defender.t_subset.tests_ids)
+            exploration_tests_l.append(len(exploration_tests))
+
             # Set up attacker and defender
             attacker.prepare_for_testing(MODEL_PICK_LIMIT_M, BANDIT_ALGORITHM)
 
@@ -322,7 +371,7 @@ def main():
             while len(f_tests_sub) > MODEL_PICK_LIMIT_T:
                 f_tests_sub.remove(np.random.choice(f_tests_sub))
 
-            defender.prepare_for_testing(f_tests_sub, f_tests_cov, MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)
+            defender.prepare_for_testing(f_tests_sub, list(set(f_tests_cov)), MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)
 
             # Execute
             execute_testing(defender.t_subset.tests_ids)
@@ -345,7 +394,19 @@ def main():
 
     ''' End of The Game '''
     # Plot results
-    plot_results(SHOW_PLOTS, True)
+    plot_results(SHOW_PLOTS, True, exploration_mutants_l, exploration_tests_l)
+
+    # Save exploration data for further plotting several graphs
+    file = open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/exploration_mutants_l', 'wb')
+    dill.dump(exploration_mutants_l, file)
+    file.close()
+    file = open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/exploration_tests_l', 'wb')
+    dill.dump(exploration_tests_l, file)
+    file.close()
+    mutants_tests = [len(attacker.mutants_list), len(defender.tests_ids)]
+    file = open('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/total_mutants_tests', 'wb')
+    dill.dump(mutants_tests, file)
+    file.close()
 
     # Produce mutants and tests files with information about them
     save_mutants_file()

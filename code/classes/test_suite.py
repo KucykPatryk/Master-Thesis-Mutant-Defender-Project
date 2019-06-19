@@ -25,11 +25,14 @@ class TestSuite:
         :param size: size of the subset
         :return: a new subset
         """
-        subset = list()
-        for i in range(size):
+        # subset = list()
+        # for i in range(size):
+        #
+        #     subset.append(ids_list[i])
 
-            subset.append(ids_list[i])
-        return subset
+        return ids_list[:size]
+        # return subset
+
 
     def create_random_subset(self, size):
         """ Same as above, just random """

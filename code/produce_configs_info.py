@@ -1,7 +1,11 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.interpolate import spline
 import os
+import dill
+import numpy as np
 
-PROGRAM = 'range'
+PROGRAM = 'triangle'
 
 if __name__ == "__main__":
     """
@@ -13,9 +17,14 @@ if __name__ == "__main__":
     dict_array = []  # Array of table dicts
     configs_array = []  # Array of configs
     folder_names = dict()
+    graphs_array_m = []  # Array of exploration data as arrays for mutants
+    graphs_array_t = []  # Array of exploration data as arrays for tests
+    mutants_tests = []  # Total amount of mutants [0] and tests [1]
 
     folders = 0
     program_dir = 'results/' + PROGRAM + '/'
+    configs_dir = 'results/' + PROGRAM + '-configs/'
+    os.makedirs(configs_dir)
 
     # Loop over the program folder
     i = 1
@@ -42,6 +51,20 @@ if __name__ == "__main__":
             i = 1
             continue
 
+        # Load Graphs
+        file = open(program_dir + folder_names['c' + str(i)] + '/exploration_mutants_l', 'rb')
+        exploration_mutants_l = dill.load(file)
+        file.close()
+        file = open(program_dir + folder_names['c' + str(i)] + '/exploration_tests_l', 'rb')
+        exploration_tests_l = dill.load(file)
+        file.close()
+        graphs_array_m.append(exploration_mutants_l)
+        graphs_array_t.append(exploration_tests_l)
+        file = open(program_dir + folder_names['c' + str(i)] + '/total_mutants_tests', 'rb')
+        mutants_tests = dill.load(file)
+        file.close()
+
+        # Save tables
         table = dict()  # Dictionary for a table
         game_info_df = pd.read_csv(program_dir + folder_names['c' + str(i)] + '/game_info_log.csv')
         tests_info_df = pd.read_csv(program_dir + folder_names['c' + str(i)] + '/tests_info.csv')
@@ -62,19 +85,56 @@ if __name__ == "__main__":
 
         print(table)
         dict_array.append(table)
-    print(configs)
+    print(configs_array)
     #print("{:,} folders".format(folders))
 
     df = pd.DataFrame.from_records(dict_array)
     df = df.round(2)
     latex_output = df.to_latex(index=False)
-    with open('results/configs_' + PROGRAM + '.tex', 'w') as f:
+    with open(configs_dir + 'configs_' + PROGRAM + '.tex', 'w') as f:
         f.write(latex_output)
 
     df = pd.DataFrame.from_records(configs_array, columns=['Config', 'Rounds', 'MSS', 'TSS', 'MPLM', 'WT', 'AM', 'DM',
                                 'BA'])
     latex_output = df.to_latex(index=False)
-    with open('results/configs_x_' + PROGRAM + '.tex', 'w') as f:
+    with open(configs_dir + 'configs_x_' + PROGRAM + '.tex', 'w') as f:
         f.write(latex_output)
 
+    # Plot joined graphs
+    # For mutants
+    fig1, ax = plt.subplots()
+    i = 1
+    for p_m in graphs_array_m:
+        x = np.arange(0, len(p_m), 1)
+        x_new = np.linspace(x.min(), x.max())
+        y_smooth = spline(x, p_m, x_new)
+        ax.plot(x_new, y_smooth, label="c" + str(i))
+        i += 1
+    # Place a legend above this subplot, expanding itself to fully use the given bounding box.
+    plt.legend(bbox_to_anchor=(0., 1.07, 1., .102), loc='lower left',
+               ncol=3, mode="expand", borderaxespad=0.)
+    ax.set_ylim(0, mutants_tests[0])
+    ax.grid()
+    ax.set(xlabel='Round', ylabel='Mutants Explored',
+           title='Visualisation of mutants explored before selection per round')
 
+    # For tests
+    fig2, ax = plt.subplots()
+    i = 1
+    for p_t in graphs_array_t:
+        x = np.arange(0, len(p_t), 1)
+        x_new = np.linspace(x.min(), x.max())
+        y_smooth = spline(x, p_t, x_new)
+        ax.plot(x_new, y_smooth, label="c" + str(i))
+        i += 1
+    # Place a legend above this subplot, expanding itself to fully use the given bounding box.
+    plt.legend(bbox_to_anchor=(0., 1.07, 1., .102), loc='lower left',
+               ncol=3, mode="expand", borderaxespad=0.)
+    ax.set_ylim(0, mutants_tests[1])
+    ax.grid()
+    ax.set(xlabel='Round', ylabel='Tests Explored',
+           title='Visualisation of tests explored before selection per round')
+
+    fig1.savefig(configs_dir + PROGRAM + '_mutants_explored.png')
+    fig2.savefig(configs_dir + PROGRAM + '_tests_explored.png')
+    plt.show()
