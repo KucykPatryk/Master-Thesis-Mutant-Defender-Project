@@ -2,7 +2,7 @@ from os import walk, path
 import math
 import shutil
 
-GAME_ITERATIONS = 25
+GAME_ITERATIONS = 500
 
 MUTANTS_SUBSET_SIZE = 10
 TESTS_SUBSET_SIZE = 10
@@ -14,7 +14,7 @@ ATTACKER_MODE = 'scikit'  # random or scikit
 DEFENDER_MODE = 'scikit'  # random or scikit
 BANDIT_ALGORITHM = 'EpsilonGreedy'
 OUTPUT_RUN_DIR = 'run0'
-PROGRAM = 'triangle'
+PROGRAM = 'inflection'
 SAVE_BANDITS = True
 LOAD_BANDITS = False
 

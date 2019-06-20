@@ -177,6 +177,7 @@ def plot_results(display, save, e_m, e_t):
     ax.plot(x, y)
     ax.set(xlabel='Round', ylabel='Kill Ratio',
            title='Linear visualisation of mutants killed by tests ratio per round')
+    ax.set_ylim(0, 1)
     ax.grid()
 
     y = np.asarray(y)
@@ -187,6 +188,7 @@ def plot_results(display, save, e_m, e_t):
     x_new = np.linspace(x.min(), x.max())
     spl = BSpline(t, c, k, extrapolate=False)
     ax.plot(x_new, spl(x_new))
+    ax.set_ylim(0, 1)
     ax.grid()
 
     if save:
