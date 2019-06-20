@@ -7,7 +7,7 @@ import numpy as np
 from time import perf_counter
 from csv import DictWriter
 from shutil import copyfile
-from scipy.interpolate import spline
+from scipy.interpolate import spline, splrep, BSpline
 import dill
 
 # Import classes
@@ -179,8 +179,19 @@ def plot_results(display, save, e_m, e_t):
            title='Linear visualisation of mutants killed by tests ratio per round')
     ax.grid()
 
+    y = np.asarray(y)
+    t, c, k = splrep(x, y, s=GAME_ITERATIONS / 10, k=4)
+    fig3_2, ax = plt.subplots()
+    ax.set(xlabel='Round', ylabel='Kill Ratio',
+           title='Linear visualisation of mutants killed by tests ratio per round')
+    x_new = np.linspace(x.min(), x.max())
+    spl = BSpline(t, c, k, extrapolate=False)
+    ax.plot(x_new, spl(x_new))
+    ax.grid()
+
     if save:
         fig3.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
+        fig3_2.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio_smoothed.png')
     if display:
         plt.show()
 
