@@ -2,10 +2,10 @@ from os import walk, path
 import math
 import shutil
 
-GAME_ITERATIONS = 500
+GAME_ITERATIONS = 5
 
-MUTANTS_SUBSET_SIZE = 10
-TESTS_SUBSET_SIZE = 10
+MUTANTS_SUBSET_SIZE = 2
+TESTS_SUBSET_SIZE = 2
 MODEL_PICK_LIMIT_MULTIPLIER = 0.5
 MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
@@ -14,11 +14,11 @@ ATTACKER_MODE = 'scikit'  # random or scikit
 DEFENDER_MODE = 'scikit'  # random or scikit
 BANDIT_ALGORITHM = 'EpsilonGreedy'
 OUTPUT_RUN_DIR = 'run0'
-PROGRAM = 'inflection'
+PROGRAM = 'hierarchypropertyparser'
 SAVE_BANDITS = True
 LOAD_BANDITS = False
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 SRC_FILE_NAME = next(walk('../generation/programs/' + PROGRAM + '/src/'))[2][0][:-5]  # Name without the extension
 SRC_FOLDER_NAME = SRC_FILE_NAME.lower()

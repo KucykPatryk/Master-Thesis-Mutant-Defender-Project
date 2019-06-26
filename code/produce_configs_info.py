@@ -1,11 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.interpolate import spline
+from scipy.interpolate import spline, splrep, BSpline
 import os
 import dill
 import numpy as np
 
-PROGRAM = 'triangle'
+PROGRAM = 'hierarchypropertyparser'
 
 if __name__ == "__main__":
     """
@@ -24,7 +24,8 @@ if __name__ == "__main__":
     folders = 0
     program_dir = 'results/' + PROGRAM + '/'
     configs_dir = 'results/' + PROGRAM + '-configs/'
-    os.makedirs(configs_dir)
+    if not os.path.exists(configs_dir):
+        os.makedirs(configs_dir)
 
     # Loop over the program folder
     i = 1
@@ -106,34 +107,38 @@ if __name__ == "__main__":
     i = 1
     for p_m in graphs_array_m:
         x = np.arange(0, len(p_m), 1)
+        t, c, k = splrep(x, p_m, s=len(graphs_array_m[0]), k=5)
         x_new = np.linspace(x.min(), x.max())
-        y_smooth = spline(x, p_m, x_new)
-        ax.plot(x_new, y_smooth, label="c" + str(i))
+        spl = BSpline(t, c, k, extrapolate=False)
+        ax.plot(x_new, spl(x_new), label="c" + str(i))
         i += 1
     # Place a legend above this subplot, expanding itself to fully use the given bounding box.
-    plt.legend(bbox_to_anchor=(0., 1.07, 1., .102), loc='lower left',
-               ncol=3, mode="expand", borderaxespad=0.)
+    plt.legend(bbox_to_anchor=(0.3, 0.), loc='lower left', ncol=4)
     ax.set_ylim(0, mutants_tests[0])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Mutants Explored',
            title='Visualisation of mutants explored before selection per round')
+    y_lim = graphs_array_m[-1][-1] + graphs_array_m[-1][-1] * 0.05
+    ax.set_ylim(0, y_lim)
 
     # For tests
     fig2, ax = plt.subplots()
     i = 1
     for p_t in graphs_array_t:
         x = np.arange(0, len(p_t), 1)
+        t, c, k = splrep(x, p_t, s=len(graphs_array_t[0]), k=5)
         x_new = np.linspace(x.min(), x.max())
-        y_smooth = spline(x, p_t, x_new)
-        ax.plot(x_new, y_smooth, label="c" + str(i))
+        spl = BSpline(t, c, k, extrapolate=False)
+        ax.plot(x_new, spl(x_new), label="c" + str(i))
         i += 1
     # Place a legend above this subplot, expanding itself to fully use the given bounding box.
-    plt.legend(bbox_to_anchor=(0., 1.07, 1., .102), loc='lower left',
-               ncol=3, mode="expand", borderaxespad=0.)
+    plt.legend(bbox_to_anchor=(0.3, 0.), loc='lower left', ncol=4)
     ax.set_ylim(0, mutants_tests[1])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Tests Explored',
            title='Visualisation of tests explored before selection per round')
+    y_lim = graphs_array_t[-1][-1] + graphs_array_t[-1][-1] * 0.05
+    ax.set_ylim(0, y_lim)
 
     fig1.savefig(configs_dir + PROGRAM + '_mutants_explored.png')
     fig2.savefig(configs_dir + PROGRAM + '_tests_explored.png')

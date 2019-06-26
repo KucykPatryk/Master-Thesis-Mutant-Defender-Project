@@ -378,6 +378,8 @@ def main():
                 for t in f_tests:
                     if int(m) in cov_map[test_mapping.index(t)] and t not in f_tests_cov:
                         f_tests_cov.append(t)
+            if len(f_tests_cov) < 1:
+                continue
             while len(f_tests_cov) < MODEL_PICK_LIMIT_T:
                 f_tests_cov.append(random.choice(f_tests_cov))
             f_tests_sub = f_tests_cov.copy()
