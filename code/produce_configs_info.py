@@ -15,6 +15,7 @@ if __name__ == "__main__":
     """
 
     dict_array = []  # Array of table dicts
+    dict_array2 = []
     configs_array = []  # Array of configs
     folder_names = dict()
     graphs_array_m = []  # Array of exploration data as arrays for mutants
@@ -67,25 +68,30 @@ if __name__ == "__main__":
 
         # Save tables
         table = dict()  # Dictionary for a table
+        table2 = dict()
         game_info_df = pd.read_csv(program_dir + folder_names['c' + str(i)] + '/game_info_log.csv')
         tests_info_df = pd.read_csv(program_dir + folder_names['c' + str(i)] + '/tests_info.csv')
         mutants_info_df = pd.read_csv(program_dir + folder_names['c' + str(i)] + '/mutants_info.csv')
-        table['C'] = 'c' + str(i)  # Configuration
+        table['Config'] = 'c' + str(i)  # Configuration
         i += 1
         table['K Ratio'] = game_info_df['Kill Ratio'].mean() * 100  # avg. kill ratio
         table['Wins'] = (game_info_df['Winner'] == 'Attacker').mean() * 100  # % wins for attacker
         table['R Time'] = game_info_df['Round Time'].mean() # avg. time per round
         tests_info_df['picked_ratio'] = \
             tests_info_df['Times selected by Agent'] / tests_info_df['Times in a Subset']
+        table2['PR Tests'] = tests_info_df['picked_ratio']
         table['PT Mean'] = tests_info_df['picked_ratio'].mean() * 100  # mean of tests picked from subset
-        table['PT Median'] = tests_info_df['picked_ratio'].median() * 100  # median of tests picked from subset
+        #table['PT Median'] = tests_info_df['picked_ratio'].median() * 100  # median of tests picked from subset
         mutants_info_df['picked_ratio'] = \
             mutants_info_df['Times selected by Agent'] / mutants_info_df['Times in a Subset']
+        table2['PR Mutants'] = mutants_info_df['picked_ratio']
         table['PM Mean'] = mutants_info_df['picked_ratio'].mean() * 100  # mean of mutants picked from subset
-        table['PM Median'] = mutants_info_df['picked_ratio'].median() * 100  # median of mutants picked from subset
+        #table['PM Median'] = mutants_info_df['picked_ratio'].median() * 100  # median of mutants picked from subset
 
-        print(table)
+        # print(table)
         dict_array.append(table)
+        dict_array2.append(table2)
+
     print(configs_array)
     #print("{:,} folders".format(folders))
 
@@ -101,13 +107,33 @@ if __name__ == "__main__":
     with open(configs_dir + 'configs_x_' + PROGRAM + '.tex', 'w') as f:
         f.write(latex_output)
 
+    # Plot Mutants and tests for its pick ratio instead of score
+    i = 1
+    for di in dict_array2:
+        fig_m, ax = plt.subplots()
+        x = np.arange(1, len(di['PR Mutants']) + 1, 1)
+        m = [x * 100 for x in di['PR Mutants']]
+        ax.bar(x, m)
+        ax.set(xlabel='Mutant', ylabel='Pick ratio', title='Pick from subset ratio in % for mutants')
+        ax.grid(axis='y')
+        fig_m.savefig(configs_dir + PROGRAM + '_mutants_pick_ratio_' + str(i) + '.png')
+
+        fig_t, ax = plt.subplots()
+        x = np.arange(0, len(di['PR Tests']), 1)
+        t = [x * 100 for x in di['PR Tests']]
+        ax.bar(x, t)
+        ax.set(xlabel='Tests', ylabel='Pick ratio', title='Pick from subset ratio in % for tests')
+        ax.grid(axis='y')
+        fig_t.savefig(configs_dir + PROGRAM + '_tests_pick_ratio_' + str(i) + '.png')
+        i += 1
+
     # Plot joined graphs
     # For mutants
     fig1, ax = plt.subplots()
     i = 1
     for p_m in graphs_array_m:
         x = np.arange(0, len(p_m), 1)
-        t, c, k = splrep(x, p_m, s=len(graphs_array_m[0]), k=5)
+        t, c, k = splrep(x, p_m)
         x_new = np.linspace(x.min(), x.max())
         spl = BSpline(t, c, k, extrapolate=False)
         ax.plot(x_new, spl(x_new), label="c" + str(i))
@@ -126,7 +152,7 @@ if __name__ == "__main__":
     i = 1
     for p_t in graphs_array_t:
         x = np.arange(0, len(p_t), 1)
-        t, c, k = splrep(x, p_t, s=len(graphs_array_t[0]), k=5)
+        t, c, k = splrep(x, p_t)
         x_new = np.linspace(x.min(), x.max())
         spl = BSpline(t, c, k, extrapolate=False)
         ax.plot(x_new, spl(x_new), label="c" + str(i))
@@ -142,4 +168,4 @@ if __name__ == "__main__":
 
     fig1.savefig(configs_dir + PROGRAM + '_mutants_explored.png')
     fig2.savefig(configs_dir + PROGRAM + '_tests_explored.png')
-    plt.show()
+    # plt.show()
