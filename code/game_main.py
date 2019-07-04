@@ -180,20 +180,22 @@ def plot_results(display, save, e_m, e_t):
     ax.set_ylim(0, 1)
     ax.grid()
 
-    y = np.asarray(y)
-    t, c, k = splrep(x, y, s=GAME_ITERATIONS / 10, k=4)
-    fig3_2, ax = plt.subplots()
-    ax.set(xlabel='Round', ylabel='Kill Ratio',
-           title='Linear visualisation of mutants killed by tests ratio per round')
-    x_new = np.linspace(x.min(), x.max())
-    spl = BSpline(t, c, k, extrapolate=False)
-    ax.plot(x_new, spl(x_new))
-    ax.set_ylim(0, 1)
-    ax.grid()
+    if GAME_ITERATIONS >= 10:
+        y = np.asarray(y)
+        t, c, k = splrep(x, y, s=GAME_ITERATIONS / 10, k=4)
+        fig3_2, ax = plt.subplots()
+        ax.set(xlabel='Round', ylabel='Kill Ratio',
+               title='Linear visualisation of mutants killed by tests ratio per round')
+        x_new = np.linspace(x.min(), x.max())
+        spl = BSpline(t, c, k, extrapolate=False)
+        ax.plot(x_new, spl(x_new))
+        ax.set_ylim(0, 1)
+        ax.grid()
+        if save:
+            fig3_2.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio_smoothed.png')
 
     if save:
         fig3.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio.png')
-        fig3_2.savefig('output/' + PROGRAM + '/' + OUTPUT_RUN_DIR + '/Kill_ratio_smoothed.png')
     if display:
         plt.show()
 
@@ -487,6 +489,22 @@ if __name__ == "__main__":
     SRC_FOLDER_NAME = SRC_FILE_NAME.lower()
 
     create_testing_files()
+
+    # Read total mutants and tests
+    t = m = 0
+    with open('../generation/programs/' + PROGRAM + '/evosuite-tests/' +
+              next(walk('../generation/programs/' + PROGRAM + '/evosuite-tests/'))[1][0] + '/' +
+              SRC_FILE_NAME + '_ESTest.java') as f:
+        for line in f:
+            if line[:13] in '  public void':
+                t += 1
+    with open('../generation/programs/' + PROGRAM + '/mutants.log') as f:
+        for line in f:
+            m += 1
+
+    # Change the values to be a % of the total, e.g. 10% of 120 mutants = 12 mutants subset size
+    MUTANTS_SUBSET_SIZE = round(m * MUTANTS_SUBSET_SIZE / 100)
+    TESTS_SUBSET_SIZE = round(t * TESTS_SUBSET_SIZE / 100)
 
     defender = Defender(DEFENDER_MODE, MODEL_PICK_LIMIT_T, TESTS_SUBSET_SIZE, PROGRAM, SRC_FOLDER_NAME, SRC_FILE_NAME)
     attacker = Attacker(ATTACKER_MODE, MODEL_PICK_LIMIT_M, MUTANTS_SUBSET_SIZE, PROGRAM)

@@ -4,17 +4,17 @@ import shutil
 
 GAME_ITERATIONS = 5
 
-MUTANTS_SUBSET_SIZE = 2
-TESTS_SUBSET_SIZE = 2
-MODEL_PICK_LIMIT_MULTIPLIER = 0.5
+MUTANTS_SUBSET_SIZE = 10  # Initial size values
+TESTS_SUBSET_SIZE = 25
+MODEL_PICK_LIMIT_MULTIPLIER = 0.3
 MODEL_PICK_LIMIT_M = math.ceil(MUTANTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
 MODEL_PICK_LIMIT_T = math.ceil(TESTS_SUBSET_SIZE * MODEL_PICK_LIMIT_MULTIPLIER)
-WINNING_THRESHOLD = 0.5  # Percentage for winning by killing mutants
+WINNING_THRESHOLD = 0.25  # Percentage for winning by killing mutants
 ATTACKER_MODE = 'scikit'  # random or scikit
 DEFENDER_MODE = 'scikit'  # random or scikit
-BANDIT_ALGORITHM = 'EpsilonGreedy'
+BANDIT_ALGORITHM = 'SoftmaxExplorer'
 OUTPUT_RUN_DIR = 'run0'
-PROGRAM = 'hierarchypropertyparser'
+PROGRAM = 'triangle'
 SAVE_BANDITS = True
 LOAD_BANDITS = False
 

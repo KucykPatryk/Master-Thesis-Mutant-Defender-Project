@@ -5,7 +5,7 @@ import dill
 from .global_variables import move_major_files, LOAD_BANDITS
 from .mutation_set import MutationSet
 from .mutation_set import MutationSubset
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
 from contextualbandits.online import BootstrappedUCB, BootstrappedTS, SeparateClassifiers, \
     EpsilonGreedy, AdaptiveGreedy, ExploreFirst, ActiveExplorer, SoftmaxExplorer
 from copy import deepcopy
@@ -22,6 +22,7 @@ class Attacker:
         if not path.isdir('../generation/programs/' + program + '/mutants'):
             self.generate_mutants()
         self.mutants_list = self.read_mutants(program)
+        self.mutants_len = len(self.mutants_list)
         self.m_set = MutationSet(self.mutants_list, len(self.mutants_list), program)
         self.m_subset = self.new_subset(self.m_set, subset_size)
         self.won = 0  # Times won against defender
@@ -38,10 +39,12 @@ class Attacker:
         """ Create and return a bandit algorithm object based on logistic regression
         :return: Bandit algorithm object
         """
-        base_algorithm = SGDClassifier(random_state=123)
+        if bandit_algorithm == 'ActiveExplorer':
+            base_algorithm = SGDClassifier(random_state=123, loss='log')
+        else:
+            base_algorithm = SGDClassifier(random_state=123)
         n_choices = 2
         algorithm = self.bandit_algorithm(bandit_algorithm, base_algorithm, n_choices)
-
         # Initial fit
         X = np.zeros((1, num_features))
         zeros = np.zeros(1)
@@ -184,6 +187,12 @@ class Attacker:
         algorithm = object()
         if algorithm_name == 'EpsilonGreedy':
             algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'AdaptiveGreedy':
+            algorithm = AdaptiveGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'ActiveExplorer':
+            algorithm = ActiveExplorer(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'SoftmaxExplorer':
+            algorithm = SoftmaxExplorer(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
 
         return algorithm
 

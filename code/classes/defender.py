@@ -26,6 +26,7 @@ class Defender:
         # self.tests_file_name = next(walk('../generation/programs/' + program + '/evosuite-tests/' +
         #                                  self.tests_folder_name))[2][0]
         self.tests_ids = self.read_test_ids()
+        self.tests_len = len(self.tests_ids)
         self.t_suite = TestSuite(self.tests_ids, len(self.tests_ids), program)
         self.t_subset = self.new_subset(self.t_suite.create_random_subset(subset_size))
         self.won = 0  # Times won against attacker
@@ -42,7 +43,10 @@ class Defender:
         """ Create and return a bandit algorithm object based on logistic regression
         :return: Bandit algorithm object
         """
-        base_algorithm = SGDClassifier(random_state=123)
+        if bandit_algorithm == 'ActiveExplorer':
+            base_algorithm = SGDClassifier(random_state=123, loss='log')
+        else:
+            base_algorithm = SGDClassifier(random_state=123)
         n_choices = 2
         algorithm = self.bandit_algorithm(bandit_algorithm, base_algorithm, n_choices)
 
@@ -160,6 +164,12 @@ class Defender:
         algorithm = object()
         if algorithm_name == 'EpsilonGreedy':
             algorithm = EpsilonGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'AdaptiveGreedy':
+            algorithm = AdaptiveGreedy(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'ActiveExplorer':
+            algorithm = ActiveExplorer(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
+        elif algorithm_name == 'SoftmaxExplorer':
+            algorithm = SoftmaxExplorer(deepcopy(base_algorithm), nchoices=n_choices, batch_train=True)
 
         return algorithm
 
@@ -187,7 +197,7 @@ class Defender:
                 ids = np.random.choice(f_tests_cov, len(f_tests_cov), p=pred.T[0], replace=False)
 
             # Create new subset
-            self.t_subset = self.new_subset(self.t_subset.create_subset(ids, self.pick_limit))
+                self.t_subset = self.new_subset(self.t_subset.create_subset(ids, self.pick_limit))
 
         elif self.agent_mode == 'random':
             # Select from the subsets based on MODEL_PICK_LIMIT parameter

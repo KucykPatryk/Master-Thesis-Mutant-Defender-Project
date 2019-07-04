@@ -87,6 +87,9 @@ if __name__ == "__main__":
         table2['PR Mutants'] = mutants_info_df['picked_ratio']
         table['PM Mean'] = mutants_info_df['picked_ratio'].mean() * 100  # mean of mutants picked from subset
         #table['PM Median'] = mutants_info_df['picked_ratio'].median() * 100  # median of mutants picked from subset
+        table2['Score Mutants'] = mutants_info_df['Score']
+        table2['Score Tests'] = tests_info_df['Score']
+        table2['Kill Ratio'] = game_info_df['Kill Ratio']
 
         # print(table)
         dict_array.append(table)
@@ -116,7 +119,7 @@ if __name__ == "__main__":
         ax.bar(x, m)
         ax.set(xlabel='Mutant', ylabel='Pick ratio', title='Pick from subset ratio in % for mutants')
         ax.grid(axis='y')
-        fig_m.savefig(configs_dir + PROGRAM + '_mutants_pick_ratio_' + str(i) + '.png')
+        fig_m.savefig(configs_dir + PROGRAM + '_mutants_pick_ratio_' + str(i) + '.pdf')
 
         fig_t, ax = plt.subplots()
         x = np.arange(0, len(di['PR Tests']), 1)
@@ -124,7 +127,33 @@ if __name__ == "__main__":
         ax.bar(x, t)
         ax.set(xlabel='Tests', ylabel='Pick ratio', title='Pick from subset ratio in % for tests')
         ax.grid(axis='y')
-        fig_t.savefig(configs_dir + PROGRAM + '_tests_pick_ratio_' + str(i) + '.png')
+        fig_t.savefig(configs_dir + PROGRAM + '_tests_pick_ratio_' + str(i) + '.pdf')
+
+        fig_m, ax = plt.subplots()
+        x = np.arange(1, len(di['Score Mutants']) + 1, 1)
+        m = di['Score Mutants']
+        ax.bar(x, m)
+        ax.set(xlabel='Mutant', ylabel='Score', title='Final scores for mutants')
+        ax.grid(axis='y')
+        fig_m.savefig(configs_dir + PROGRAM + '_mutants_score_' + str(i) + '.pdf')
+
+        fig_t, ax = plt.subplots()
+        x = np.arange(0, len(di['Score Tests']), 1)
+        m = di['Score Tests']
+        ax.bar(x, m)
+        ax.set(xlabel='Tests', ylabel='Score', title='Final scores for tests by their test method number')
+        ax.grid(axis='y')
+        fig_t.savefig(configs_dir + PROGRAM + '_tests_score_' + str(i) + '.pdf')
+
+        fig_k, ax = plt.subplots()
+        x = np.arange(1, len(di['Kill Ratio']) + 1, 1)
+        m = di['Kill Ratio']
+        ax.bar(x, m)
+        ax.set(xlabel='Round', ylabel='Kill Ratio', title='Ratio of mutants killed by tests per round')
+        ax.set_ylim(0, 1)
+        ax.grid(axis='y')
+        fig_k.savefig(configs_dir + PROGRAM + '_kill_ratio_' + str(i) + '.pdf')
+
         i += 1
 
     # Plot joined graphs
@@ -143,7 +172,7 @@ if __name__ == "__main__":
     ax.set_ylim(0, mutants_tests[0])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Mutants Explored',
-           title='Visualisation of mutants explored before selection per round')
+           title='Visualisation of mutants explored per round')
     y_lim = graphs_array_m[-1][-1] + graphs_array_m[-1][-1] * 0.05
     ax.set_ylim(0, y_lim)
 
@@ -162,10 +191,10 @@ if __name__ == "__main__":
     ax.set_ylim(0, mutants_tests[1])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Tests Explored',
-           title='Visualisation of tests explored before selection per round')
+           title='Visualisation of tests explored per round')
     y_lim = graphs_array_t[-1][-1] + graphs_array_t[-1][-1] * 0.05
     ax.set_ylim(0, y_lim)
 
-    fig1.savefig(configs_dir + PROGRAM + '_mutants_explored.png')
-    fig2.savefig(configs_dir + PROGRAM + '_tests_explored.png')
+    fig1.savefig(configs_dir + PROGRAM + '_mutants_explored.pdf')
+    fig2.savefig(configs_dir + PROGRAM + '_tests_explored.pdf')
     # plt.show()
