@@ -2,8 +2,6 @@ import random
 
 from .test import Test
 
-from .global_variables import test_map_array
-
 
 class TestSuite:
     """ Class representing the whole testing suite """

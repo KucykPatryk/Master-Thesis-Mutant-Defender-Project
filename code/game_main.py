@@ -387,8 +387,10 @@ def main():
             f_tests_sub = f_tests_cov.copy()
             while len(f_tests_sub) > MODEL_PICK_LIMIT_T:
                 f_tests_sub.remove(np.random.choice(f_tests_sub))
+            if len(f_tests_sub) < 1:
+                continue
 
-            defender.prepare_for_testing(f_tests_sub, list(set(f_tests_cov)), MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)
+            defender.prepare_for_testing(list(set(f_tests_sub)), list(set(f_tests_cov)), MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)
 
             # Execute
             execute_testing(defender.t_subset.tests_ids)
@@ -480,6 +482,7 @@ if __name__ == "__main__":
 
     # SAVE_BANDITS = True if args.save_bandits in 'True' else False
     # LOAD_BANDITS = True if args.load_bandits in 'True' else False
+    # BANDIT_LOAD_DIR = "hierarchypropertyparser/rlrundef_f_gis:500_mss:10_tss:25_mplm:0.30_wt:0.25_am:scikit_dm:scikit_ba:EpsilonGreedy"
     BANDIT_LOAD_DIR = args.bandit_load_dir or PROGRAM + '/' + OUTPUT_RUN_DIR  # Example:
     # 'triangle/run0_gis:3_mss:10_tss:10_mplm:0.3_wt:0.5_am:scikit_dm:scikit_ba:EpsilonGreedy'
 

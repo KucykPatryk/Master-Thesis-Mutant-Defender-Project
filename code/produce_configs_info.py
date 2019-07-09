@@ -5,7 +5,7 @@ import os
 import dill
 import numpy as np
 
-PROGRAM = 'hierarchypropertyparser'
+PROGRAM = 'range'
 
 if __name__ == "__main__":
     """
@@ -40,14 +40,14 @@ if __name__ == "__main__":
                 config_data = c.split('_')
                 configs = dict()  # Dictionary showing configs
                 configs['Config'] = 'c' + str(i)  # Configuration
-                configs['Rounds'] = config_data[1].split(':')[-1]  # Iterations
-                configs['MSS'] = config_data[2].split(':')[-1]  # Mutants subset size
-                configs['TSS'] = config_data[3].split(':')[-1]  # Tests subset size
-                configs['MPLM'] = float(config_data[4].split(':')[-1]) * 100  # Model pick limit multiplier
-                configs['WT'] = float(config_data[5].split(':')[-1]) * 100  # Winning threshold
-                configs['AM'] = config_data[6].split(':')[-1]  # Attacker Mode
-                configs['DM'] = config_data[7].split(':')[-1]  # Defender Mode
-                configs['BA'] = config_data[8].split(':')[-1]  # Bandit Algorithm
+                configs['Rounds'] = config_data[2].split(':')[-1]  # Iterations
+                configs['MSS'] = config_data[3].split(':')[-1]  # Mutants subset size
+                configs['TSS'] = config_data[4].split(':')[-1]  # Tests subset size
+                configs['MPLM'] = float(config_data[5].split(':')[-1]) * 100  # Model pick limit multiplier
+                configs['WT'] = float(config_data[6].split(':')[-1]) * 100  # Winning threshold
+                configs['AM'] = config_data[7].split(':')[-1]  # Attacker Mode
+                configs['DM'] = config_data[8].split(':')[-1]  # Defender Mode
+                configs['BA'] = config_data[9].split(':')[-1]  # Bandit Algorithm
                 configs_array.append(configs)
                 i += 1
             i = 1
