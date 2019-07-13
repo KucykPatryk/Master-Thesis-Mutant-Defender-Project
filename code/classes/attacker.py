@@ -128,6 +128,7 @@ class Attacker:
 
         :return: OneHotEncoder for mutant features
         """
+        cats = []
         df = pd.read_csv('../generation/programs/' + program + '/mutants.context', sep=',')
         cat1 = df.mutationOperatorGroup.unique()
         cat2 = df.mutationOperator.unique()
@@ -139,6 +140,23 @@ class Attacker:
         cat6 = df.hasVariableChild.unique()
         cat7 = df.hasOperatorChild.unique()
         cat8 = df.hasLiteralChild.unique()
+
+        extra = np.array(range(1, 50 - len(cat1)))
+        cat1 = np.hstack([cat1, extra])
+        extra = np.array(range(1, 50 - len(cat2)))
+        cat2 = np.hstack([cat2, extra])
+        extra = np.array(range(1, 50 - len(cat3)))
+        cat3 = np.hstack([cat3, extra])
+        extra = np.array(range(1, 50 - len(cat4)))
+        cat4 = np.hstack([cat4, extra])
+        extra = np.array(range(1, 50 - len(cat5)))
+        cat5 = np.hstack([cat5, extra])
+        if len(cat6) < 2:
+            cat6 = np.array([0, 1])
+        if len(cat7) < 2:
+            cat7 = np.array([0, 1])
+        if len(cat8) < 2:
+            cat8 = np.array([0, 1])
 
         enc = preprocessing.OneHotEncoder(handle_unknown='ignore',
                                           categories=[cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8])

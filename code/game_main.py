@@ -251,6 +251,17 @@ def save_log_file(x, elapsed_time, writer, log_line_dic):
     log_line_dic['Round Time'] = '%.3f' % elapsed_time
     writer.writerow(log_line_dic)
 
+def save_log_file_skip(x, elapsed_time, writer, log_line_dic):
+    """ Writes to log file given round info when skipping"""
+    log_line_dic['Round'] = '%d' % (x + 1)
+    log_line_dic['Winner'] = 'Skip'
+    log_line_dic['Loser'] = 'Skip'
+    log_line_dic['Kill Ratio'] = '%.3f' % kill_ratio_plot[x]
+    log_line_dic['Mutants Survived'] = 0
+    log_line_dic['Mutants Killed'] = 0
+    log_line_dic['Round Time'] = '%.3f' % elapsed_time
+    writer.writerow(log_line_dic)
+
 
 def save_mutants_file():
     """ Produce mutants file with information about them """
@@ -381,6 +392,12 @@ def main():
                     if int(m) in cov_map[test_mapping.index(t)] and t not in f_tests_cov:
                         f_tests_cov.append(t)
             if len(f_tests_cov) < 1:
+                time_stop = perf_counter()
+                elapsed_time = time_stop - time_start  # In seconds
+                print("Elapsed time for round %d: %.3f sec" % (x, elapsed_time))
+                kill_ratio_plot.append(0)
+                # Save to log file
+                save_log_file_skip(x, elapsed_time, gl_writer, log_line_dic)
                 continue
             while len(f_tests_cov) < MODEL_PICK_LIMIT_T:
                 f_tests_cov.append(random.choice(f_tests_cov))
@@ -388,6 +405,12 @@ def main():
             while len(f_tests_sub) > MODEL_PICK_LIMIT_T:
                 f_tests_sub.remove(np.random.choice(f_tests_sub))
             if len(f_tests_sub) < 1:
+                time_stop = perf_counter()
+                elapsed_time = time_stop - time_start  # In seconds
+                print("Elapsed time for round %d: %.3f sec" % (x, elapsed_time))
+                kill_ratio_plot.append(0)
+                # Save to log file
+                save_log_file_skip(x, elapsed_time, gl_writer, log_line_dic)
                 continue
 
             defender.prepare_for_testing(list(set(f_tests_sub)), list(set(f_tests_cov)), MODEL_PICK_LIMIT_T, BANDIT_ALGORITHM)

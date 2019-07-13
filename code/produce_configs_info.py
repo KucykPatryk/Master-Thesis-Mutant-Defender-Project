@@ -5,7 +5,7 @@ import os
 import dill
 import numpy as np
 
-PROGRAM = 'range'
+PROGRAM = 'fontinfo'
 
 if __name__ == "__main__":
     """
