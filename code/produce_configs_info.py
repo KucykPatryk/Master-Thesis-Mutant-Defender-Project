@@ -5,7 +5,7 @@ import os
 import dill
 import numpy as np
 
-PROGRAM = 'fontinfo'
+PROGRAM = 'fontinfo'  # fontinfo, inflection, range, hierarchypropertyparser
 
 if __name__ == "__main__":
     """
@@ -39,7 +39,7 @@ if __name__ == "__main__":
                 folder_names['c' + str(i)] = c
                 config_data = c.split('_')
                 configs = dict()  # Dictionary showing configs
-                configs['Config'] = 'c' + str(i)  # Configuration
+                configs['Config'] = 'c' + str(i) + config_data[1].split(':')[-1]  # Configuration
                 configs['Rounds'] = config_data[2].split(':')[-1]  # Iterations
                 configs['MSS'] = config_data[3].split(':')[-1]  # Mutants subset size
                 configs['TSS'] = config_data[4].split(':')[-1]  # Tests subset size
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     ax.set_ylim(0, mutants_tests[0])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Mutants Explored',
-           title='Visualisation of mutants explored per round')
+           title='Mutants explored per round')
     y_lim = graphs_array_m[-1][-1] + graphs_array_m[-1][-1] * 0.05
     ax.set_ylim(0, y_lim)
 
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     ax.set_ylim(0, mutants_tests[1])
     ax.grid()
     ax.set(xlabel='Round', ylabel='Tests Explored',
-           title='Visualisation of tests explored per round')
+           title='Tests explored per round')
     y_lim = graphs_array_t[-1][-1] + graphs_array_t[-1][-1] * 0.05
     ax.set_ylim(0, y_lim)
 
